@@ -86,9 +86,10 @@ export default function CheckoutPage() {
         emptyCart();
       }, 1000);
 
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setError(err?.message || 'Gagal mengirim pesanan. Coba lagi ya!');
+      const errorMessage = err instanceof Error ? err.message : 'Gagal mengirim pesanan. Coba lagi ya!';
+      setError(errorMessage);
       setLoading(false);
     }
   }
