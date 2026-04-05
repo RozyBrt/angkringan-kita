@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Angkringan Kita ☕
 
-## Getting Started
+Aplikasi e-commerce sederhana dan modern untuk pemesanan menu angkringan secara online. Dibangun untuk memberikan pengalaman memesan yang cepat, halus (*user-friendly*), dan nyaman bagi pembeli maupun admin.
 
-First, run the development server:
+**🔗 Live Demo:** [https://angkringan-kita.vercel.app](https://angkringan-kita.vercel.app)
 
+---
+
+## 🛠️ Tech Stack & Teknologi
+
+Proyek ini dibangun menggunakan kumpulan teknologi modern (Modern Stack):
+
+- **[Next.js 14 (App Router)](https://nextjs.org/)** – Kerangka kerja React untuk antarmuka yang cepat dan optimal (SEO-friendly).
+- **[Tailwind CSS](https://tailwindcss.com/)** – Penyusunan *styling* desain utilitas (dengan palet warna *warm-earthy* buatan khusus).
+- **[Supabase](https://supabase.com/)** – Layanan Database PostgreSQL sekaligus Auth & pengamanan data (*Row Level Security*).
+- **[TypeScript](https://www.typescriptlang.org/)** – Untuk keamanan penulisan struktur data (tipe menu, cart, pesanan).
+- **[Lucide React](https://lucide.dev/)** – Koleksi ikon UI yang mulus dan estetik.
+- **Vercel** – Hosting otomatis (CI/CD).
+
+---
+
+## ✨ Fitur Utama
+
+### Untuk Pelanggan (Customer)
+* **Katalog Interaktif**: Browse menu kopi, makanan, dan cemilan dengan mudah. Dibalut animasi skeleton loading yang rapi.
+* **Keranjang Belanja (Cart)**: Tambah / kurangi barang belanjaan, dengan detail perhitungan harga total yang tersimpan otomatis di perangkat (Local Storage).
+* **Checkout Cepat**: Formulir pemesanan sederhana (Nama, Meja, dan Catatan).
+* **Status Real-time**: Pembeli dialihkan ke halaman kesuksesan dengan nomor pesanan khusus.
+
+### Untuk Admin Web
+* **Dashboard Tersembunyi**: Diakses secara rahasia melalui `/admin` atau klik khusus pada tulisan logo di ujung paling bawah (*footer*).
+* **Sistem Auth**: Terlindungi kata sandi yang ditauntukan secara aman dari sistem autentikasi Supabase.
+* **Manajemen Pesanan Mulus**: Filter pesanan ("Menunggu" vs "Selesai"), penghitungan statistik, dan pembaruan status hanya dalam satu kali klik.
+
+---
+
+## 🚀 Cara Menjalankan di Komputer Lokal (Development)
+
+Jika kamu ingin mengembangkan kode proyek ini *(clone)* di komputermu sendiri:
+
+### 1. Prasyarat
+- [Node.js](https://nodejs.org/en/) & `npm` ter-install.
+- Akun [Supabase](https://supabase.com) untuk *database*.
+
+### 2. Instalasi Aplikasi
+1. Lakukan *Clone* ke komputermu:
+   ```bash
+   git clone https://github.com/RozyBrt/angkringan-kita.git
+   ```
+2. Pindah ke direktori, lalu install semua *dependency*:
+   ```bash
+   cd angkringan-kita
+   npm install
+   ```
+
+### 3. Konfigurasi Database (Supabase)
+1. Buat proyek baru di [Supabase Dashboard](https://supabase.com/dashboard).
+2. Temukan file kredensial rahasiamu di bagian **Settings > API**.
+3. Buat file bernama `.env.local` di *folder* utama aplikasi, isikan kode berikut:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=https://[YOUR_PROJECT_REF].supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=ey...[YOUR_ANON_KEY]...
+   ```
+4. Buka **SQL Editor** pada web Supabase. Jalankan *query* yang ada di dalam file `supabase/schema.sql` lalu dilanjut mengeksekusi `supabase/seed.sql` untuk membuat tabel dan menanam menu-menu awal.
+
+### 4. Mulai Server Lokal
+Ketikan perintah berikut di terminal:
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
+Buka **`http://localhost:3000`** di browsermu dan mulailah mencoba berjualan!
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+💡 *Dibuat dengan ❤️ — Nikmati setiap tegukan.*
