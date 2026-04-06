@@ -30,7 +30,7 @@ function TrackContent() {
     async function fetchStatuses(mapped: RecentOrder[]) {
       const ids = mapped.map(m => m.id);
       if (ids.length === 0) return;
-      
+
       const { data } = await supabase.from('orders').select('id, status').in('id', ids);
       if (data) {
         setRecentOrders(prev => prev.map(ro => {
@@ -92,7 +92,7 @@ function TrackContent() {
       fetchError = error;
     } else {
       // 2. Short ID match (Check in recentOrders memory)
-      const matchedLocal = recentOrders.find(ro => 
+      const matchedLocal = recentOrders.find(ro =>
         ro.id.toUpperCase().startsWith(cleanQuery.toUpperCase())
       );
 
@@ -112,7 +112,7 @@ function TrackContent() {
           .ilike('customer_name', `%${cleanQuery}%`)
           .order('created_at', { ascending: false })
           .limit(10);
-        
+
         if (data && data.length > 1) {
           setMatchingOrders(data as OrderWithItems[]);
           setLoading(false);
@@ -125,7 +125,7 @@ function TrackContent() {
     }
 
     if (fetchError || !fetchedData) {
-      setError('Pesanan tidak ditemukan. Coba ketikkan Nama Pemesan (sesuai pesanan) atau klik riwayat di bawah jika ada.');
+      setError('Pesanan tidak ditemukan. Coba ketikkan Nama Pemesan (sesuai pesanan) atau id yang tertera di struk.');
     } else {
       setOrder(fetchedData as OrderWithItems);
       // Optional: automatically format input to show the found short ID or name
@@ -196,7 +196,7 @@ function TrackContent() {
             {recentOrders.map((ro) => {
               const shortId = ro.id.split('-')[0].toUpperCase();
               const timeStr = ro.time ? new Date(ro.time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
-              
+
               return (
                 <button
                   key={ro.id}
@@ -242,7 +242,7 @@ function TrackContent() {
             {matchingOrders.map((mo) => {
               const shortId = mo.id.split('-')[0].toUpperCase();
               const timeStr = new Date(mo.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-              
+
               return (
                 <button
                   key={mo.id}
@@ -292,9 +292,8 @@ function TrackContent() {
       {order && (
         <div className="card p-5 animate-slide-up">
           {/* Status Banner */}
-          <div className={`flex items-center gap-3 p-4 rounded-xl mb-4 ${
-            isDone ? 'bg-green-50 border border-green-200' : 'bg-warm-50 border border-warm-200'
-          }`}>
+          <div className={`flex items-center gap-3 p-4 rounded-xl mb-4 ${isDone ? 'bg-green-50 border border-green-200' : 'bg-warm-50 border border-warm-200'
+            }`}>
             {isDone ? (
               <CheckCircle2 size={24} className="text-green-500 flex-shrink-0" />
             ) : (
