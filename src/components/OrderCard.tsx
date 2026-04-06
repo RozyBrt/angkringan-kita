@@ -3,15 +3,16 @@
 import { OrderWithItems } from '@/types';
 import { formatPrice } from '@/lib/cart';
 import { supabase } from '@/lib/supabase';
-import { CheckCheck, Clock, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCheck, Clock, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 
 interface OrderCardProps {
   order: OrderWithItems;
   onStatusChange: (orderId: string, status: 'pending' | 'done') => void;
+  isNew?: boolean;
 }
 
-export default function OrderCard({ order, onStatusChange }: OrderCardProps) {
+export default function OrderCard({ order, onStatusChange, isNew = false }: OrderCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [updating, setUpdating] = useState(false);
 
@@ -43,7 +44,9 @@ export default function OrderCard({ order, onStatusChange }: OrderCardProps) {
   return (
     <div
       className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
-        isDone
+        isNew
+          ? 'bg-coffee-800 border-warm-500 ring-2 ring-warm-500/30 animate-pulse-soft'
+          : isDone
           ? 'bg-coffee-900/60 border-coffee-800 opacity-70'
           : 'bg-coffee-800 border-coffee-700'
       }`}
@@ -55,6 +58,12 @@ export default function OrderCard({ order, onStatusChange }: OrderCardProps) {
             <span className="font-bold text-cream-100 text-base">
               {order.customer_name}
             </span>
+            {isNew && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-warm-500 text-white">
+                <Sparkles size={10} />
+                Baru!
+              </span>
+            )}
             {isDone ? (
               <span className="badge-done">
                 <CheckCheck size={11} />

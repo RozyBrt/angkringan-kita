@@ -79,6 +79,15 @@ export default function CheckoutPage() {
 
       // Tandai sebagai selesai agar UI tidak berubah saat keranjang dikosongkan
       setIsDone(true);
+
+      // Simpan order ID ke localStorage untuk tracking
+      try {
+        const stored = localStorage.getItem('angkringan_recent_orders');
+        const recent: string[] = stored ? JSON.parse(stored) : [];
+        recent.unshift(order.id);
+        localStorage.setItem('angkringan_recent_orders', JSON.stringify(recent.slice(0, 5)));
+      } catch { /* ignore */ }
+
       router.push(`/order-success?id=${order.id}`);
       
       // Kosongkan keranjang di background

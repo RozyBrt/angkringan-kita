@@ -52,18 +52,22 @@ export default function MenuPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Hero */}
-      <div className="text-center mb-10">
-        <div className="inline-flex items-center gap-2 bg-coffee-100 text-coffee-700 
-                        px-4 py-1.5 rounded-full text-sm font-medium mb-4">
-          <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse-soft" />
-          Buka Sekarang
+      <div className="relative rounded-3xl bg-coffee-900 overflow-hidden mb-10 shadow-xl border border-coffee-800">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800&q=80')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-coffee-900 to-transparent"></div>
+        <div className="relative p-8 md:p-12 text-center flex flex-col items-center">
+          <div className="inline-flex items-center gap-2 bg-warm-500/20 text-warm-200 border border-warm-500/30
+                          px-4 py-1.5 rounded-full text-sm font-medium mb-4 backdrop-blur-sm">
+            <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse-soft" />
+            Kami Buka Sekarang
+          </div>
+          <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-bold text-cream-50 mb-3 drop-shadow-md">
+            Selamat Datang di <span className="text-warm-400">Angkringan Kita</span>
+          </h1>
+          <p className="text-coffee-200 text-base md:text-lg max-w-md mx-auto leading-relaxed mt-2 text-shadow-sm">
+            Tempat di mana rasa otentik bertemu dengan kehangatan. Pilih menu favoritmu dan pesan sekarang juga! ☕🍢
+          </p>
         </div>
-        <h1 className="font-display text-4xl sm:text-5xl font-bold text-coffee-900 mb-3">
-          Menu Hari Ini
-        </h1>
-        <p className="text-coffee-500 text-base max-w-sm mx-auto leading-relaxed">
-          Pilih yang kamu suka, pesan langsung, dan nikmati selagi hangat ☕
-        </p>
       </div>
 
       {/* Search */}

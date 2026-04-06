@@ -15,7 +15,10 @@ function OrderSuccessContent() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!orderId) return;
+    if (!orderId) {
+      setLoading(false);
+      return;
+    }
     async function fetchOrder() {
       const { data, error } = await supabase
         .from('orders')
@@ -33,6 +36,24 @@ function OrderSuccessContent() {
     return (
       <div className="text-center py-20 text-coffee-400">
         <span className="inline-block w-8 h-8 border-3 border-coffee-300 border-t-coffee-700 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!orderId || !order) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 text-center animate-fade-in">
+        <p className="text-5xl mb-4">🤔</p>
+        <h1 className="font-display text-2xl font-bold text-coffee-900 mb-3">
+          Pesanan Tidak Ditemukan
+        </h1>
+        <p className="text-coffee-500 mb-6">
+          Sepertinya kamu belum melakukan pemesanan atau link-nya sudah tidak valid.
+        </p>
+        <Link href="/" className="btn-primary inline-flex items-center gap-2">
+          <Home size={16} />
+          Kembali ke Menu
+        </Link>
       </div>
     );
   }
@@ -102,14 +123,26 @@ function OrderSuccessContent() {
         </div>
       )}
 
-      <Link
-        href="/"
-        id="back-to-menu"
-        className="btn-primary inline-flex items-center gap-2"
-      >
-        <Home size={16} />
-        Kembali ke Menu
-      </Link>
+      <div className="flex flex-col sm:flex-row justify-center gap-3">
+        <Link
+          href="/"
+          id="back-to-menu"
+          className="btn-secondary inline-flex justify-center items-center gap-2"
+        >
+          <Home size={16} />
+          Kembali ke Menu
+        </Link>
+        {order && (
+          <a
+            href={`https://wa.me/6281234567890?text=${encodeURIComponent(`Halo min, saya pesen yaa\n\nNama: *${order.customer_name}*\nID Pesanan: ${order.id}\nCatatan: ${order.note || '-'}\nTotal: *${formatPrice(order.total_price)}*\n\nBisa langsung diproses? Makasih.`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 bg-[#25D366] text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-[#20bd5a] active:scale-95 transition-all shadow-md"
+          >
+            💬 Kabari Via WA
+          </a>
+        )}
+      </div>
     </div>
   );
 }

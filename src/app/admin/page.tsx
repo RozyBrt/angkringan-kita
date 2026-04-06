@@ -11,6 +11,7 @@ import {
   Clock,
   CheckCheck,
   ShoppingBag,
+  Bell,
 } from 'lucide-react';
 
 type FilterStatus = 'all' | 'pending' | 'done';
@@ -22,6 +23,7 @@ export default function AdminPage() {
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [filter, setFilter] = useState<FilterStatus>('pending');
   const [refreshing, setRefreshing] = useState(false);
+  const [newOrderIds, setNewOrderIds] = useState<Set<string>>(new Set());
 
   // Check auth session
   useEffect(() => {
@@ -50,8 +52,48 @@ export default function AdminPage() {
     setOrdersLoading(false);
   }, []);
 
+  // Fetch orders when logged in
   useEffect(() => {
     if (session) fetchOrders();
+  }, [session, fetchOrders]);
+
+  // Supabase Realtime: listen for new orders
+  useEffect(() => {
+    if (!session) return;
+
+    const channel = supabase
+      .channel('orders-realtime')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'orders' },
+        (payload) => {
+          // Fetch fresh data with relations
+          fetchOrders().then(() => {
+            const newId = payload.new.id as string;
+            setNewOrderIds((prev) => new Set(prev).add(newId));
+            // Remove "new" badge after 10 seconds
+            setTimeout(() => {
+              setNewOrderIds((prev) => {
+                const next = new Set(prev);
+                next.delete(newId);
+                return next;
+              });
+            }, 10000);
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'orders' },
+        () => {
+          fetchOrders();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [session, fetchOrders]);
 
   async function handleRefresh() {
@@ -105,6 +147,12 @@ export default function AdminPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {newOrderIds.size > 0 && (
+            <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-warm-600 text-white text-sm font-semibold animate-pulse-soft">
+              <Bell size={15} />
+              <span>{newOrderIds.size} Baru!</span>
+            </div>
+          )}
           <button
             id="refresh-orders"
             onClick={handleRefresh}
@@ -202,7 +250,12 @@ export default function AdminPage() {
       ) : (
         <div className="space-y-3">
           {filteredOrders.map((order) => (
-            <OrderCard key={order.id} order={order} onStatusChange={handleStatusChange} />
+            <OrderCard
+              key={order.id}
+              order={order}
+              onStatusChange={handleStatusChange}
+              isNew={newOrderIds.has(order.id)}
+            />
           ))}
         </div>
       )}

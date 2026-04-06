@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { CartProvider } from "@/hooks/useCart";
+import { ToastProvider } from "@/hooks/useToast";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 
@@ -24,16 +25,18 @@ export default function RootLayout({
   return (
     <html lang="id">
       <body className="antialiased">
-        <CartProvider>
-          <Navbar />
-          <main className="min-h-screen pt-16">{children}</main>
-          <footer className="bg-coffee-900 text-cream-200 text-center py-6 mt-16 text-sm">
-            <Link href="/admin" className="block font-display text-lg text-cream-100 mb-1 hover:text-white transition-colors">
-              Angkringan Kita ☕
-            </Link>
-            <p className="text-coffee-300">Dibuat dengan ❤️ — Nikmati setiap tegukan</p>
-          </footer>
-        </CartProvider>
+        <ToastProvider>
+          <CartProvider>
+            <Navbar />
+            <main className="min-h-screen pt-16">{children}</main>
+            <footer className="bg-coffee-900 text-cream-200 text-center py-6 mt-16 text-sm">
+              <Link href="/admin" className="block font-display text-lg text-cream-100 mb-1 hover:text-white transition-colors">
+                Angkringan Kita ☕
+              </Link>
+              <p className="text-coffee-300">Dibuat dengan ❤️ — Nikmati setiap tegukan</p>
+            </footer>
+          </CartProvider>
+        </ToastProvider>
       </body>
     </html>
   );

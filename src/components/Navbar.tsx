@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ShoppingCart, Coffee } from 'lucide-react';
+import { ShoppingCart, Coffee, Info, ClipboardList } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { useState, useEffect } from 'react';
 
@@ -53,7 +53,7 @@ export default function Navbar() {
         </Link>
 
         {/* Nav links */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {!isAdmin && (
             <Link
               href="/"
@@ -64,6 +64,34 @@ export default function Navbar() {
               }`}
             >
               Menu
+            </Link>
+          )}
+
+          {!isAdmin && (
+            <Link
+              href="/about"
+              className={`hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                pathname === '/about'
+                  ? 'text-coffee-800 bg-coffee-100'
+                  : 'text-coffee-600 hover:text-coffee-800 hover:bg-cream-100'
+              }`}
+            >
+              <Info size={14} />
+              Tentang
+            </Link>
+          )}
+
+          {!isAdmin && (
+            <Link
+              href="/track"
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                pathname === '/track'
+                  ? 'text-coffee-800 bg-coffee-100'
+                  : 'text-coffee-600 hover:text-coffee-800 hover:bg-cream-100'
+              }`}
+            >
+              <ClipboardList size={15} />
+              <span className="hidden sm:inline">Lacak</span>
             </Link>
           )}
 
