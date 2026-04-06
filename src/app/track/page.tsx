@@ -20,12 +20,26 @@ function TrackContent() {
     id: string;
     name?: string;
     time?: string;
+    status?: string;
   }
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [matchingOrders, setMatchingOrders] = useState<OrderWithItems[]>([]);
 
   // Load recent order IDs from localStorage
   useEffect(() => {
+    async function fetchStatuses(mapped: RecentOrder[]) {
+      const ids = mapped.map(m => m.id);
+      if (ids.length === 0) return;
+      
+      const { data } = await supabase.from('orders').select('id, status').in('id', ids);
+      if (data) {
+        setRecentOrders(prev => prev.map(ro => {
+          const match = data.find(d => d.id === ro.id);
+          return match ? { ...ro, status: match.status } : ro;
+        }));
+      }
+    }
+
     try {
       const stored = localStorage.getItem('angkringan_recent_orders');
       if (stored) {
@@ -34,6 +48,7 @@ function TrackContent() {
           // Backward compatibility for old string array
           const mapped = parsed.map(p => typeof p === 'string' ? { id: p } : p);
           setRecentOrders(mapped);
+          fetchStatuses(mapped);
         }
       }
     } catch {
@@ -195,8 +210,20 @@ function TrackContent() {
                   <div className="font-semibold text-coffee-900 border-b border-coffee-200/50 pb-1 mb-1 leading-none">
                     {ro.name ? `Atas Nama: ${ro.name}` : `Tanpa Nama`}
                   </div>
-                  <div className="text-coffee-600 text-xs font-mono">
-                    🎟️ #{shortId} {timeStr && `• 🕒 ${timeStr}`}
+                  <div className="flex items-center gap-1.5 text-xs font-mono mt-1.5 w-full">
+                    <span className="text-coffee-500">#{shortId}</span>
+                    {timeStr && <span className="text-coffee-400 border-l border-coffee-200/50 pl-1.5">{timeStr}</span>}
+                    {ro.status && (
+                      ro.status === 'done' ? (
+                        <span className="ml-auto inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700 border border-green-200">
+                          <CheckCircle2 size={10} /> Selesai
+                        </span>
+                      ) : (
+                        <span className="ml-auto inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-warm-100 text-warm-700 border border-warm-200">
+                          <Clock size={10} /> Diproses
+                        </span>
+                      )
+                    )}
                   </div>
                 </button>
               );
@@ -230,8 +257,18 @@ function TrackContent() {
                   <div className="font-bold text-coffee-900 border-b border-coffee-200/50 pb-1 mb-1 leading-none">
                     Atas Nama: {mo.customer_name}
                   </div>
-                  <div className="text-coffee-600 text-xs font-mono mt-1">
-                    🎟️ #{shortId} {timeStr && `• 🕒 ${timeStr}`}
+                  <div className="flex items-center gap-1.5 text-xs font-mono mt-1.5 w-full">
+                    <span className="text-coffee-500">#{shortId}</span>
+                    {timeStr && <span className="text-coffee-400 border-l border-coffee-200/50 pl-1.5">{timeStr}</span>}
+                    {mo.status === 'done' ? (
+                      <span className="ml-auto inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700 border border-green-200">
+                        <CheckCircle2 size={10} /> Selesai
+                      </span>
+                    ) : (
+                      <span className="ml-auto inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-warm-100 text-warm-700 border border-warm-200">
+                        <Clock size={10} /> Diproses
+                      </span>
+                    )}
                   </div>
                 </button>
               );
