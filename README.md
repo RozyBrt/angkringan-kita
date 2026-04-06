@@ -21,16 +21,19 @@ Proyek ini dibangun menggunakan kumpulan teknologi modern (Modern Stack):
 
 ## ✨ Fitur Utama
 
-### Untuk Pelanggan (Customer)
-* **Katalog Interaktif**: Browse menu kopi, makanan, dan cemilan dengan mudah. Dibalut animasi skeleton loading yang rapi.
-* **Keranjang Belanja (Cart)**: Tambah / kurangi barang belanjaan, dengan detail perhitungan harga total yang tersimpan otomatis di perangkat (Local Storage).
-* **Checkout Cepat**: Formulir pemesanan sederhana (Nama, Meja, dan Catatan).
-* **Status Real-time**: Pembeli dialihkan ke halaman kesuksesan dengan nomor pesanan khusus.
+### Untuk Pelanggan (*Customer*)
+* **Katalog Interaktif**: Browse menu kopi, makanan, dan cemilan dengan mudah. Dibalut animasi *skeleton loading* dan *page transitions* yang amat rapi.
+* **Keranjang Belanja (Cart)**: Tambah / kurangi barang belanjaan, dengan detail perhitungan harga total yang tersimpan otomatis di *Local Storage*.
+* **Checkout Cepat**: Formulir pemesanan ringkas. Setelah proses berhasil, pelanggan mendapat resi/nomor tunggu.
+* **Hubungi via WhatsApp**: Tersedia pintasan otomatis (*WA Alert*) untuk pelanggan langsung menghubungi nomor kasir apabila ada pesanan tambahan/urgent.
+* **Lacak Pesanan Cerdas (Intelligent Search)**: Pelanggan dapat memantau apakah pesanannya sedang "Diproses" atau "Selesai", asyiknya tanpa harus memasukkan UUID panjang! Aplikasi mendukung pemanggilan pesanan lewat *Kode Pesanan Asli* (misal: `#7FAA`), berdasarkan data riwayat peramban (*Smart Local History*), atau kamu cukup ketikkan *Nama Pemesan*.
+* **Halaman Tentang Angkringan**: Portal info lokasi lapak dan jam operasional angkringan. Layar *mobile-friendly* dilengkapi petunjuk G-Maps interaktif!
 
 ### Untuk Admin Web
-* **Dashboard Tersembunyi**: Diakses secara rahasia melalui `/admin` atau klik khusus pada tulisan logo di ujung paling bawah (*footer*).
-* **Sistem Auth**: Terlindungi kata sandi yang ditauntukan secara aman dari sistem autentikasi Supabase.
-* **Manajemen Pesanan Mulus**: Filter pesanan ("Menunggu" vs "Selesai"), penghitungan statistik, dan pembaruan status hanya dalam satu kali klik.
+* **Dashboard Tersembunyi**: Diakses secara rahasia melalui tautan bawah (`/admin`) dengan *email + password* (Sistem Auth Supabase).
+* **Live Orders (Supabase Realtime)**: Tak perlu tegang me-*refresh* layar kasir. Jika pembeli menekan pesan, order akan otomatis berbunyi dan lompat ke layar antrean Admin detik itu juga dengan lencana **"Baru!"**.
+* **Manajemen Pesanan (*Order Station*)**: Filter pemesanan ("Menunggu" vs "Selesai"). Kasir/Admin menandai order kelar hanya dalam satu kali klik. Status kelar langsung menjalar ke laman perangkat pelanggan.
+* **Manajemen Etalase (Toko Menu CRUD)**: Kasir dapat menambahkan menu baru, mengedit harga/tipe, menghapus, sampai "Men-nonaktifkan" hidangan dengan satu tombol sakelar kapan pun bahannya ludes di dapur (**Tandai Habis**)!
 
 ---
 
