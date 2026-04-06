@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { OrderWithItems } from '@/types';
 import { formatPrice } from '@/lib/cart';
-import { Search, Clock, CheckCircle2, Home, ClipboardList, ArrowRight } from 'lucide-react';
+import { Search, Clock, CheckCircle2, Home, ClipboardList } from 'lucide-react';
 
 function TrackContent() {
   const searchParams = useSearchParams();
