@@ -50,23 +50,64 @@ function TrackContent() {
   }, [queryId]);
 
   async function handleSearch(searchId?: string) {
-    const id = searchId || orderId.trim();
-    if (!id) return;
+    const rawVal = searchId || orderId;
+    const queryVal = rawVal.trim();
+    if (!queryVal) return;
 
     setLoading(true);
     setError(null);
     setOrder(null);
 
-    const { data, error: fetchError } = await supabase
-      .from('orders')
-      .select('*, order_items(*, menu_items(*))')
-      .eq('id', id)
-      .single();
+    const cleanQuery = queryVal.startsWith('#') ? queryVal.slice(1) : queryVal;
+    const isFullUUID = cleanQuery.length === 36 && cleanQuery.includes('-');
 
-    if (fetchError || !data) {
-      setError('Pesanan tidak ditemukan. Periksa kembali ID pesananmu.');
+    let fetchedData = null;
+    let fetchError = null;
+
+    if (isFullUUID) {
+      // 1. Exact UUID match
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*, order_items(*, menu_items(*))')
+        .eq('id', cleanQuery)
+        .single();
+      fetchedData = data;
+      fetchError = error;
     } else {
-      setOrder(data as OrderWithItems);
+      // 2. Short ID match (Check in recentOrders memory)
+      const matchedLocal = recentOrders.find(ro => 
+        ro.id.toUpperCase().startsWith(cleanQuery.toUpperCase())
+      );
+
+      if (matchedLocal) {
+        const { data, error } = await supabase
+          .from('orders')
+          .select('*, order_items(*, menu_items(*))')
+          .eq('id', matchedLocal.id)
+          .single();
+        fetchedData = data;
+        fetchError = error;
+      } else {
+        // 3. Fallback: Search by Customer Name
+        const { data, error } = await supabase
+          .from('orders')
+          .select('*, order_items(*, menu_items(*))')
+          .ilike('customer_name', `%${cleanQuery}%`)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        fetchedData = data?.[0];
+        fetchError = error;
+      }
+    }
+
+    if (fetchError || !fetchedData) {
+      setError('Pesanan tidak ditemukan. Coba ketikkan Nama Pemesan (sesuai pesanan) atau klik riwayat di bawah jika ada.');
+    } else {
+      setOrder(fetchedData as OrderWithItems);
+      // Optional: automatically format input to show the found short ID or name
+      if (!isFullUUID && !searchId) {
+        setOrderId(`#${fetchedData.id.split('-')[0].toUpperCase()}`);
+      }
     }
     setLoading(false);
   }
@@ -84,7 +125,7 @@ function TrackContent() {
           Lacak Pesanan
         </h1>
         <p className="text-coffee-500 text-sm">
-          Masukkan ID pesananmu untuk melihat statusnya
+          Ketik Nama Pemesan atau Kode Pesanan untuk melihat statusnya
         </p>
       </div>
 
@@ -103,7 +144,7 @@ function TrackContent() {
             type="text"
             value={orderId}
             onChange={(e) => setOrderId(e.target.value)}
-            placeholder="Paste ID pesanan di sini..."
+            placeholder="Ketik Nama atau Kode (Mis. Rangga)..."
             className="input-field pl-10 text-sm"
           />
         </div>
