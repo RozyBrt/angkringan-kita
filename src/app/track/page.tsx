@@ -16,7 +16,12 @@ function TrackContent() {
   const [order, setOrder] = useState<OrderWithItems | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [recentIds, setRecentIds] = useState<string[]>([]);
+  interface RecentOrder {
+    id: string;
+    name?: string;
+    time?: string;
+  }
+  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
 
   // Load recent order IDs from localStorage
   useEffect(() => {
@@ -24,13 +29,18 @@ function TrackContent() {
       const stored = localStorage.getItem('angkringan_recent_orders');
       if (stored) {
         const parsed = JSON.parse(stored);
-        setRecentIds(Array.isArray(parsed) ? parsed : []);
+        if (Array.isArray(parsed)) {
+          // Backward compatibility for old string array
+          const mapped = parsed.map(p => typeof p === 'string' ? { id: p } : p);
+          setRecentOrders(mapped);
+        }
       }
     } catch {
       /* ignore */
     }
   }, []);
 
+  // ... (auto search omitted here to save space but keeping it intact below)
   // Auto-search if query param provided
   useEffect(() => {
     if (queryId) {
@@ -113,23 +123,33 @@ function TrackContent() {
       </form>
 
       {/* Recent Orders */}
-      {recentIds.length > 0 && !order && (
+      {recentOrders.length > 0 && !order && (
         <div className="mb-6">
-          <p className="text-xs font-medium text-coffee-400 mb-2">Pesanan Terakhirmu:</p>
-          <div className="flex flex-wrap gap-2">
-            {recentIds.map((id) => (
-              <button
-                key={id}
-                onClick={() => {
-                  setOrderId(id);
-                  handleSearch(id);
-                }}
-                className="px-3 py-1.5 bg-cream-100 text-coffee-600 rounded-lg text-xs 
-                           font-mono hover:bg-cream-200 transition-colors truncate max-w-[200px]"
-              >
-                {id.slice(0, 8)}...
-              </button>
-            ))}
+          <p className="text-xs font-medium text-coffee-400 mb-2">Pilih Pesanan Terakhirmu:</p>
+          <div className="flex flex-col sm:flex-row flex-wrap gap-2">
+            {recentOrders.map((ro) => {
+              const shortId = ro.id.split('-')[0].toUpperCase();
+              const timeStr = ro.time ? new Date(ro.time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
+              
+              return (
+                <button
+                  key={ro.id}
+                  onClick={() => {
+                    setOrderId(ro.id);
+                    handleSearch(ro.id);
+                  }}
+                  className="px-4 py-2.5 bg-cream-100 text-coffee-700 rounded-xl text-sm 
+                             font-medium hover:bg-cream-200 transition-colors text-left sm:text-center shadow-sm"
+                >
+                  <div className="font-semibold text-coffee-900 border-b border-coffee-200/50 pb-1 mb-1 leading-none">
+                    {ro.name ? `Atas Nama: ${ro.name}` : `Tanpa Nama`}
+                  </div>
+                  <div className="text-coffee-600 text-xs font-mono">
+                    🎟️ #{shortId} {timeStr && `• 🕒 ${timeStr}`}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}

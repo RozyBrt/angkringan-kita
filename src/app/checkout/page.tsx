@@ -80,11 +80,21 @@ export default function CheckoutPage() {
       // Tandai sebagai selesai agar UI tidak berubah saat keranjang dikosongkan
       setIsDone(true);
 
-      // Simpan order ID ke localStorage untuk tracking
+      // Simpan riwayat pesanan (lengkap dengan nama) ke localStorage untuk tracking
       try {
         const stored = localStorage.getItem('angkringan_recent_orders');
-        const recent: string[] = stored ? JSON.parse(stored) : [];
-        recent.unshift(order.id);
+        let recent: any[] = [];
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) recent = parsed;
+        }
+        
+        recent.unshift({ 
+          id: order.id, 
+          name: order.customer_name,
+          time: new Date().toISOString()
+        });
+        
         localStorage.setItem('angkringan_recent_orders', JSON.stringify(recent.slice(0, 5)));
       } catch { /* ignore */ }
 

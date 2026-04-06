@@ -76,13 +76,23 @@ function OrderSuccessContent() {
       </p>
 
       {order && (
-        <div className="bg-white rounded-2xl border border-cream-100 p-5 mb-6 text-left space-y-4">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-xs text-coffee-400 mb-0.5">Nama Pemesan</p>
-              <p className="font-bold text-coffee-900">{order.customer_name}</p>
-            </div>
-            <span className="badge-pending">
+        <>
+          <div className="bg-coffee-100 border border-coffee-200 rounded-2xl p-4 mb-6">
+            <p className="text-xs text-coffee-500 font-medium uppercase tracking-widest mb-1">
+              Nomor Pesanan
+            </p>
+            <p className="font-display font-bold text-4xl tracking-wider text-coffee-900">
+              #{order.id.split('-')[0].toUpperCase()}
+            </p>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-cream-100 p-5 mb-6 text-left space-y-4">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-xs text-coffee-400 mb-0.5">Nama Pemesan</p>
+                <p className="font-bold text-coffee-900">{order.customer_name}</p>
+              </div>
+              <span className="badge-pending">
               <Clock size={11} />
               Menunggu
             </span>
@@ -121,6 +131,7 @@ function OrderSuccessContent() {
             </span>
           </div>
         </div>
+        </>
       )}
 
       <div className="flex flex-col sm:flex-row justify-center gap-3">

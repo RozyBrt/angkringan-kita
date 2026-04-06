@@ -56,7 +56,7 @@ export default function OrderCard({ order, onStatusChange, isNew = false }: Orde
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <span className="font-bold text-cream-100 text-base">
-              {order.customer_name}
+              {order.customer_name} <span className="text-coffee-400 font-mono text-sm ml-1">#{order.id.split('-')[0].toUpperCase()}</span>
             </span>
             {isNew && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-warm-500 text-white">
