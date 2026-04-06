@@ -22,6 +22,7 @@ function TrackContent() {
     time?: string;
   }
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
+  const [matchingOrders, setMatchingOrders] = useState<OrderWithItems[]>([]);
 
   // Load recent order IDs from localStorage
   useEffect(() => {
@@ -57,6 +58,7 @@ function TrackContent() {
     setLoading(true);
     setError(null);
     setOrder(null);
+    setMatchingOrders([]);
 
     const cleanQuery = queryVal.startsWith('#') ? queryVal.slice(1) : queryVal;
     const isFullUUID = cleanQuery.length === 36 && cleanQuery.includes('-');
@@ -94,9 +96,16 @@ function TrackContent() {
           .select('*, order_items(*, menu_items(*))')
           .ilike('customer_name', `%${cleanQuery}%`)
           .order('created_at', { ascending: false })
-          .limit(1);
-        fetchedData = data?.[0];
-        fetchError = error;
+          .limit(10);
+        
+        if (data && data.length > 1) {
+          setMatchingOrders(data as OrderWithItems[]);
+          setLoading(false);
+          return;
+        } else {
+          fetchedData = data?.[0];
+          fetchError = error;
+        }
       }
     }
 
@@ -165,7 +174,7 @@ function TrackContent() {
       </form>
 
       {/* Recent Orders */}
-      {recentOrders.length > 0 && !order && (
+      {recentOrders.length > 0 && !order && matchingOrders.length === 0 && (
         <div className="mb-6">
           <p className="text-xs font-medium text-coffee-400 mb-2">Pilih Pesanan Terakhirmu:</p>
           <div className="flex flex-col sm:flex-row flex-wrap gap-2">
@@ -187,6 +196,41 @@ function TrackContent() {
                     {ro.name ? `Atas Nama: ${ro.name}` : `Tanpa Nama`}
                   </div>
                   <div className="text-coffee-600 text-xs font-mono">
+                    🎟️ #{shortId} {timeStr && `• 🕒 ${timeStr}`}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Matching Orders Disambiguation */}
+      {matchingOrders.length > 0 && !order && (
+        <div className="mb-6 animate-fade-in">
+          <p className="text-sm font-medium text-coffee-600 mb-3">
+            Ditemukan {matchingOrders.length} pesanan dengan nama tersebut. Pilih pesanan aslimu:
+          </p>
+          <div className="flex flex-col sm:flex-row flex-wrap gap-2">
+            {matchingOrders.map((mo) => {
+              const shortId = mo.id.split('-')[0].toUpperCase();
+              const timeStr = new Date(mo.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+              
+              return (
+                <button
+                  key={mo.id}
+                  onClick={() => {
+                    setOrderId(`#${shortId}`);
+                    setOrder(mo);
+                    setMatchingOrders([]);
+                  }}
+                  className="px-4 py-2.5 bg-warm-100 border border-warm-200 text-coffee-800 rounded-xl text-sm 
+                             font-medium hover:bg-warm-200 transition-colors text-left sm:text-center shadow-sm"
+                >
+                  <div className="font-bold text-coffee-900 border-b border-coffee-200/50 pb-1 mb-1 leading-none">
+                    Atas Nama: {mo.customer_name}
+                  </div>
+                  <div className="text-coffee-600 text-xs font-mono mt-1">
                     🎟️ #{shortId} {timeStr && `• 🕒 ${timeStr}`}
                   </div>
                 </button>
