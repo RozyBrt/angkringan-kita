@@ -100,7 +100,7 @@ export default function AboutPage() {
               💬 WhatsApp
             </a>
             <a
-              href="https://instagram.com/angkringan.kita"
+              href="https://instagram.com/rozy.brt"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-4 py-2 bg-pink-50 text-pink-700 
@@ -123,7 +123,7 @@ export default function AboutPage() {
         </div>
         <div className="aspect-video relative bg-cream-100">
           <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3953.1!2d110.4!3d-7.77!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zN8KwNDYnMTIuMCJTIDExMMKwMjQnMDAuMCJF!5e0!3m2!1sid!2sid!4v1!5m2!1sid!2sid"
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d127574.82364802553!2d97.37846599999999!3d2.2606104499999997!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x302539becc5a84b9%3A0xf22eba8ba0db80e0!2sPulau%20Banyak%2C%20Kabupaten%20Aceh%20Singkil%2C%20Aceh!5e0!3m2!1sid!2sid!4v1775495451110!5m2!1sid!2sid"
             width="100%"
             height="100%"
             style={{ border: 0 }}
