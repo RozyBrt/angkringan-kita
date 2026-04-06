@@ -83,7 +83,7 @@ export default function CheckoutPage() {
       // Simpan riwayat pesanan (lengkap dengan nama) ke localStorage untuk tracking
       try {
         const stored = localStorage.getItem('angkringan_recent_orders');
-        let recent: any[] = [];
+        let recent: Array<{ id: string; name?: string; time?: string } | string> = [];
         if (stored) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed)) recent = parsed;

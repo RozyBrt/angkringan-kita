@@ -362,6 +362,7 @@ export default function AdminMenuPage() {
                       {/* Image */}
                       <div className="w-12 h-12 rounded-lg bg-coffee-700 flex-shrink-0 overflow-hidden flex items-center justify-center">
                         {item.image_url ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
                           <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
                         ) : (
                           <ImageOff size={16} className="text-coffee-500" />

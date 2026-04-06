@@ -46,6 +46,7 @@ function TrackContent() {
     if (queryId) {
       handleSearch(queryId);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryId]);
 
   async function handleSearch(searchId?: string) {
