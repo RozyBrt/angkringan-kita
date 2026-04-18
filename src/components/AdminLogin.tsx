@@ -12,7 +12,9 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resetMessage, setResetMessage] = useState<string | null>(null);
 
   async function handleLogin(e: FormEvent) {
     e.preventDefault();
@@ -27,6 +29,28 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
     } else {
       onLoginSuccess();
     }
+  }
+
+  async function handleResetPassword() {
+    if (!email) {
+      setError('Masukkan email bray, biar bisa dikirim link reset-nya!');
+      return;
+    }
+
+    setResetLoading(true);
+    setError(null);
+    setResetMessage(null);
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/admin?reset=true`,
+    });
+
+    if (error) {
+      setError('Gagal kirim email reset. Cek lagi emailnya ya!');
+    } else {
+      setResetMessage('Sip! Link reset password udah dikirim ke email kamu bray. Cek inbox ya!');
+    }
+    setResetLoading(false);
   }
 
   return (
@@ -91,12 +115,29 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
                            transition-all duration-200"
               />
             </div>
+            <div className="flex justify-end mt-1.5">
+              <button
+                type="button"
+                onClick={handleResetPassword}
+                disabled={resetLoading}
+                className="text-xs text-coffee-500 hover:text-coffee-300 transition-colors"
+              >
+                {resetLoading ? 'Mengirim...' : 'Lupa password?'}
+              </button>
+            </div>
           </div>
 
           {error && (
             <div className="bg-red-900/40 border border-red-800/60 text-red-300 
                             rounded-xl px-4 py-3 text-sm">
               {error}
+            </div>
+          )}
+
+          {resetMessage && (
+            <div className="bg-green-900/40 border border-green-800/60 text-green-300 
+                            rounded-xl px-4 py-3 text-sm">
+              {resetMessage}
             </div>
           )}
 
