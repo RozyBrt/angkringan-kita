@@ -56,15 +56,23 @@ Jika kamu ingin mengembangkan kode proyek ini *(clone)* di komputermu sendiri:
    npm install
    ```
 
-### 3. Konfigurasi Database (Supabase)
+### 3. Konfigurasi Database & Auth (Supabase)
 1. Buat proyek baru di [Supabase Dashboard](https://supabase.com/dashboard).
 2. Temukan file kredensial rahasiamu di bagian **Settings > API**.
-3. Buat file bernama `.env.local` di *folder* utama aplikasi, isikan kode berikut:
+3. Buat file bernama `.env.local` di *folder* utama aplikasi (gunakan `.env.example` sebagai referensi), isikan sesuai data proyekmu:
    ```env
    NEXT_PUBLIC_SUPABASE_URL=https://[YOUR_PROJECT_REF].supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=ey...[YOUR_ANON_KEY]...
    ```
-4. Buka **SQL Editor** pada web Supabase. Jalankan *query* yang ada di dalam file `supabase/schema.sql` lalu dilanjut mengeksekusi `supabase/seed.sql` untuk membuat tabel dan menanam menu-menu awal.
+4. **Setup Tabel:** Buka **SQL Editor** pada web Supabase. Jalankan *query* yang ada di dalam file `supabase/schema.sql` lalu dilanjut mengeksekusi `supabase/seed.sql` untuk membuat tabel dan menanam menu-menu awal.
+5. **Setup Autentikasi Admin:**
+   - Masuk ke menu **Authentication > Providers** di Supabase.
+   - Pastikan **Email** sudah *Enabled*.
+   - (Opsional) Matikan opsi *Confirm Email* agar kamu bisa langsung login setelah membuat akun tanpa verifikasi email.
+6. **Bikin Akun Admin:**
+   - Masuk ke menu **Authentication > Users**.
+   - Klik **Add User** > **Create New User**.
+   - Masukkan Email dan Password untuk login admin kamu. Akun inilah yang akan kamu gunakan untuk masuk ke halaman `/admin`.
 
 ### 4. Mulai Server Lokal
 Ketikan perintah berikut di terminal:
