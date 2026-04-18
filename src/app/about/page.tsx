@@ -54,9 +54,9 @@ export default function AboutPage() {
             <h3 className="font-display font-semibold text-coffee-900">Lokasi</h3>
           </div>
           <p className="text-coffee-600 text-sm leading-relaxed">
-            Jl. Angkringan No. 17, Seturan,<br />
-            Caturtunggal, Depok, Sleman,<br />
-            Yogyakarta 55281
+            Pojok Senja No. 00, Jalur Kenangan,<br />
+            Kawasan Wajib Ngopi, Enjoy,<br />
+            Dunia 1327 ☕
           </p>
         </div>
 
