@@ -426,7 +426,7 @@ function TrackContent() {
             <div className="border-t border-cream-200 pt-3 flex justify-between">
               <span className="font-bold text-coffee-900">Total</span>
               <span className="font-bold text-coffee-800 text-lg tabular-nums">
-                {formatPrice(order.total_amount || (order as any).total_price)}
+                {formatPrice(order.total_amount || order.total_price || 0)}
               </span>
             </div>
 

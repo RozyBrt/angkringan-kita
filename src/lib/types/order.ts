@@ -18,6 +18,7 @@ export interface Order {
   ready_at?: string | null;
   served_at?: string | null;
   note?: string | null;
+  total_price?: number;
 }
 
 export interface OrderItem {
