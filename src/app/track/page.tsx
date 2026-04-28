@@ -3,10 +3,10 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
-import { OrderWithItems } from '@/types';
+import { supabase } from '@/lib/supabase/client';
+import { OrderWithItems, OrderStatus } from '@/lib/types/order';
 import { formatPrice } from '@/lib/cart';
-import { Search, Clock, CheckCircle2, Home, ClipboardList } from 'lucide-react';
+import { Search, Clock, CheckCircle2, Home, ClipboardList, AlertCircle, ChefHat, PackageCheck, Coffee } from 'lucide-react';
 
 function TrackContent() {
   const searchParams = useSearchParams();
@@ -127,16 +127,104 @@ function TrackContent() {
     if (fetchError || !fetchedData) {
       setError('Pesanan tidak ditemukan. Coba ketikkan Nama Pemesan (sesuai pesanan) atau id yang tertera di struk.');
     } else {
-      setOrder(fetchedData as OrderWithItems);
+      setOrder(fetchedData as unknown as OrderWithItems);
       // Optional: automatically format input to show the found short ID or name
       if (!isFullUUID && !searchId) {
-        setOrderId(`#${fetchedData.id.split('-')[0].toUpperCase()}`);
+        setOrderId(`#${fetchedData.id.toString().split('-')[0].toUpperCase()}`);
       }
     }
     setLoading(false);
   }
 
-  const isDone = order?.status === 'done';
+  // Realtime subscription for the current order
+  useEffect(() => {
+    if (!order?.id) return;
+
+    const channel = supabase
+      .channel(`order-${order.id}`)
+      .on('postgres_changes', 
+          { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${order.id}` }, 
+          (payload) => {
+            console.log('Update status bray!', payload.new);
+            setOrder(prev => prev ? { ...prev, ...payload.new } as OrderWithItems : null);
+          }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [order?.id]);
+
+  const getStatusDisplay = (status: OrderStatus) => {
+    switch (status) {
+      case 'pending':
+        return { 
+          title: 'Menunggu Konfirmasi', 
+          desc: 'Pesananmu sudah masuk, tunggu kasir ngecek ya!', 
+          color: 'text-yellow-600', 
+          bgColor: 'bg-yellow-50', 
+          borderColor: 'border-yellow-200',
+          icon: <Clock size={24} className="text-yellow-500" />
+        };
+      case 'confirmed':
+        return { 
+          title: 'Dikonfirmasi', 
+          desc: 'Pesananmu sudah diterima, siap-siap masuk dapur!', 
+          color: 'text-blue-600', 
+          bgColor: 'bg-blue-50', 
+          borderColor: 'border-blue-200',
+          icon: <CheckCircle2 size={24} className="text-blue-500" />
+        };
+      case 'preparing':
+        return { 
+          title: 'Sedang Dimasak 🔥', 
+          desc: 'Sabar ya, koki lagi beraksi buat pesananmu.', 
+          color: 'text-orange-600', 
+          bgColor: 'bg-orange-50', 
+          borderColor: 'border-orange-200',
+          icon: <ChefHat size={24} className="text-orange-500" />
+        };
+      case 'ready':
+        return { 
+          title: 'Siap Diambil/Diantar! ✅', 
+          desc: 'Pesananmu sudah matang dan siap dinikmati.', 
+          color: 'text-green-600', 
+          bgColor: 'bg-green-50', 
+          borderColor: 'border-green-200',
+          icon: <PackageCheck size={24} className="text-green-500" />
+        };
+      case 'served':
+        return { 
+          title: 'Sudah Disajikan ☕', 
+          desc: 'Selamat menikmati! Jangan lupa bayar ya bray.', 
+          color: 'text-zinc-600', 
+          bgColor: 'bg-zinc-50', 
+          borderColor: 'border-zinc-200',
+          icon: <Coffee size={24} className="text-zinc-500" />
+        };
+      case 'cancelled':
+        return { 
+          title: 'Dibatalkan ❌', 
+          desc: 'Maaf bray, pesananmu dibatalkan.', 
+          color: 'text-red-600', 
+          bgColor: 'bg-red-50', 
+          borderColor: 'border-red-200',
+          icon: <AlertCircle size={24} className="text-red-500" />
+        };
+      default:
+        return { 
+          title: 'Sedang Diproses...', 
+          desc: 'Mohon tunggu sebentar ya!', 
+          color: 'text-zinc-500', 
+          bgColor: 'bg-zinc-50', 
+          borderColor: 'border-zinc-200',
+          icon: <Clock size={24} className="text-zinc-500" />
+        };
+    }
+  };
+
+  const statusInfo = order ? getStatusDisplay(order.status as OrderStatus) : null;
 
   return (
     <div className="max-w-xl mx-auto px-4 py-10 animate-fade-in">
@@ -214,7 +302,7 @@ function TrackContent() {
                     <span className="text-coffee-500">#{shortId}</span>
                     {timeStr && <span className="text-coffee-400 border-l border-coffee-200/50 pl-1.5">{timeStr}</span>}
                     {ro.status && (
-                      ro.status === 'done' ? (
+                      ro.status === 'served' ? (
                         <span className="ml-auto inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700 border border-green-200">
                           <CheckCircle2 size={10} /> Selesai
                         </span>
@@ -240,7 +328,7 @@ function TrackContent() {
           </p>
           <div className="flex flex-col sm:flex-row flex-wrap gap-2">
             {matchingOrders.map((mo) => {
-              const shortId = mo.id.split('-')[0].toUpperCase();
+              const shortId = mo.id.toString().split('-')[0].toUpperCase();
               const timeStr = new Date(mo.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 
               return (
@@ -260,7 +348,7 @@ function TrackContent() {
                   <div className="flex items-center gap-1.5 text-xs font-mono mt-1.5 w-full">
                     <span className="text-coffee-500">#{shortId}</span>
                     {timeStr && <span className="text-coffee-400 border-l border-coffee-200/50 pl-1.5">{timeStr}</span>}
-                    {mo.status === 'done' ? (
+                    {mo.status === 'served' ? (
                       <span className="ml-auto inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700 border border-green-200">
                         <CheckCircle2 size={10} /> Selesai
                       </span>
@@ -292,24 +380,22 @@ function TrackContent() {
       {order && (
         <div className="card p-5 animate-slide-up">
           {/* Status Banner */}
-          <div className={`flex items-center gap-3 p-4 rounded-xl mb-4 ${isDone ? 'bg-green-50 border border-green-200' : 'bg-warm-50 border border-warm-200'
-            }`}>
-            {isDone ? (
-              <CheckCircle2 size={24} className="text-green-500 flex-shrink-0" />
-            ) : (
-              <Clock size={24} className="text-warm-500 flex-shrink-0" />
-            )}
-            <div>
-              <p className={`font-bold text-sm ${isDone ? 'text-green-800' : 'text-warm-800'}`}>
-                {isDone ? 'Pesanan Selesai! 🎉' : 'Sedang Diproses...'}
-              </p>
-              <p className={`text-xs ${isDone ? 'text-green-600' : 'text-warm-600'}`}>
-                {isDone
-                  ? 'Pesananmu sudah siap. Terima kasih!'
-                  : 'Pesananmu sedang disiapkan. Mohon tunggu sebentar ya!'}
-              </p>
+          {/* Status Banner */}
+          {statusInfo && (
+            <div className={`flex items-center gap-3 p-4 rounded-xl mb-4 border ${statusInfo.bgColor} ${statusInfo.borderColor}`}>
+              <div className="flex-shrink-0">
+                {statusInfo.icon}
+              </div>
+              <div>
+                <p className={`font-bold text-sm ${statusInfo.color}`}>
+                  {statusInfo.title}
+                </p>
+                <p className={`text-xs ${statusInfo.color} opacity-80`}>
+                  {statusInfo.desc}
+                </p>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Order Details */}
           <div className="space-y-3">
@@ -340,7 +426,7 @@ function TrackContent() {
             <div className="border-t border-cream-200 pt-3 flex justify-between">
               <span className="font-bold text-coffee-900">Total</span>
               <span className="font-bold text-coffee-800 text-lg tabular-nums">
-                {formatPrice(order.total_price)}
+                {formatPrice(order.total_amount || (order as any).total_price)}
               </span>
             </div>
 

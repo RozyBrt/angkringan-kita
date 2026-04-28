@@ -55,8 +55,10 @@ export default function CheckoutPage() {
         .from('orders')
         .insert({
           customer_name: customerName.trim(),
+          table_number: tableNumber || null,
           note: noteText || null,
           total_price: total,
+          total_amount: total,
           status: 'pending',
         })
         .select()
@@ -88,18 +90,18 @@ export default function CheckoutPage() {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed)) recent = parsed;
         }
-        
-        recent.unshift({ 
-          id: order.id, 
+
+        recent.unshift({
+          id: order.id,
           name: order.customer_name,
           time: new Date().toISOString()
         });
-        
+
         localStorage.setItem('angkringan_recent_orders', JSON.stringify(recent.slice(0, 5)));
       } catch { /* ignore */ }
 
       router.push(`/order-success?id=${order.id}`);
-      
+
       // Kosongkan keranjang di background
       setTimeout(() => {
         emptyCart();
