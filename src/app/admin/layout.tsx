@@ -21,6 +21,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <span className="text-coffee-500 text-sm hidden sm:inline">— Angkringan Kita</span>
           </div>
           <nav className="flex items-center gap-1">
+            <AdminNavLink href="/admin/dashboard">🚀 Dashboard</AdminNavLink>
             <AdminNavLink href="/admin">📋 Pesanan</AdminNavLink>
             <AdminNavLink href="/admin/menu">🍽️ Menu</AdminNavLink>
           </nav>
