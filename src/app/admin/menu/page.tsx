@@ -119,7 +119,7 @@ export default function AdminMenuPage() {
 
     if (editingItem) {
       // Update pake Server Action bray
-      const res = await updateMenuItem(editingItem.id, payload as any);
+      const res = await updateMenuItem(editingItem.id, payload as Partial<MenuItem>);
       if (!res.success) {
         setFormError(res.error || 'Gagal update menu');
         setSaving(false);
@@ -127,7 +127,7 @@ export default function AdminMenuPage() {
       }
     } else {
       // Insert pake Server Action bray
-      const res = await createMenuItem(payload as any);
+      const res = await createMenuItem(payload as Partial<MenuItem>);
       if (!res.success) {
         setFormError(res.error || 'Gagal tambah menu');
         setSaving(false);

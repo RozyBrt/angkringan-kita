@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { OrderWithItems } from '@/types';
+import { OrderWithItems, OrderStatus } from '@/lib/types/order';
 import AdminLogin from '@/components/AdminLogin';
 import OrderCard from '@/components/OrderCard';
 import {
@@ -46,9 +46,9 @@ export default function AdminPage() {
       .from('orders')
       .select('*, order_items(*, menu_items(*))')
       .order('created_at', { ascending: false });
-
+ 
     if (!error && data) {
-      setOrders(data as OrderWithItems[]);
+      setOrders(data as unknown as OrderWithItems[]);
     }
     setOrdersLoading(false);
   }, []);
@@ -109,12 +109,12 @@ export default function AdminPage() {
     setOrders([]);
   }
 
-  async function handleStatusChange(orderId: string | number, status: 'pending' | 'served') {
+  async function handleStatusChange(orderId: string | number, status: OrderStatus) {
     // Pake Server Action biar tembus RLS bray
-    const res = await updateOrderStatus(orderId, status as any);
+    const res = await updateOrderStatus(orderId, status);
     if (res.success) {
       setOrders((prev) =>
-        prev.map((o) => (o.id === orderId ? { ...o, status: status as any } : o))
+        prev.map((o) => (o.id === orderId ? { ...o, status } : o))
       );
     } else {
       alert('Gagal update status bray: ' + res.error);
@@ -136,9 +136,9 @@ export default function AdminPage() {
   }
 
   // Filter orders
-  const filteredOrders = filter === 'all'
+  const filteredOrders = (filter === 'all'
     ? orders
-    : orders.filter((o) => o.status === filter);
+    : orders.filter((o) => o.status === filter)) as OrderWithItems[];
 
   const pendingCount = orders.filter((o) => o.status === 'pending').length;
   const servedCount = orders.filter((o) => o.status === 'served').length;
@@ -259,9 +259,9 @@ export default function AdminPage() {
           {filteredOrders.map((order) => (
             <OrderCard
               key={order.id}
-              order={order}
+              order={order as OrderWithItems}
               onStatusChange={handleStatusChange}
-              isNew={newOrderIds.has(order.id)}
+              isNew={newOrderIds.has(order.id.toString())}
             />
           ))}
         </div>

@@ -3,7 +3,7 @@
 import { OrderWithItems, OrderStatus } from '@/lib/types/order';
 import { formatPrice } from '@/lib/cart';
 import { updateOrderStatus } from '@/lib/actions/orders';
-import { CheckCheck, Clock, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
+import { ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 
 interface OrderCardProps {
@@ -90,7 +90,7 @@ export default function OrderCard({ order, onStatusChange, isNew = false }: Orde
 
         <div className="flex items-center gap-2 flex-shrink-0">
           <span className="font-bold text-cream-200 text-sm tabular-nums">
-            {formatPrice(order.total_price)}
+            {formatPrice(order.total_price || 0)}
           </span>
           <button
             onClick={() => setExpanded((v) => !v)}
@@ -121,7 +121,7 @@ export default function OrderCard({ order, onStatusChange, isNew = false }: Orde
       <div className="px-4 pb-4">
         {config.nextLabel && (
           <button
-            onClick={() => config.nextStatus === 'served' ? handlePay() : handleUpdate(config.nextStatus as any)}
+            onClick={() => config.nextStatus === 'served' ? handlePay() : handleUpdate(config.nextStatus as OrderStatus)}
             disabled={updating}
             className={`w-full py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 
                         active:scale-95 flex items-center justify-center gap-2 ${config.color}

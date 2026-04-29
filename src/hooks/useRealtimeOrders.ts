@@ -7,11 +7,9 @@ import { OrderWithItems } from '@/lib/types/order';
 export function useRealtimeOrders() {
   const [orders, setOrders] = useState<OrderWithItems[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<'CONNECTING' | 'CONNECTED' | 'DISCONNECTED' | 'ERROR'>('CONNECTING');
   
   const retryCount = useRef(0);
-  const MAX_RETRIES = 3;
 
   const playNotification = useCallback(() => {
     try {
@@ -77,5 +75,5 @@ export function useRealtimeOrders() {
     };
   }, [fetchOrders, playNotification]);
 
-  return { orders, loading, error, connectionStatus, refetch: fetchOrders };
+  return { orders, loading, connectionStatus, refetch: fetchOrders };
 }
