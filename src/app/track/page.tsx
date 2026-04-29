@@ -189,10 +189,11 @@ function TrackContent() {
     if (fetchError || !fetchedData) {
       setError('Pesanan tidak ditemukan. Coba ketikkan Nama Pemesan (sesuai pesanan) atau id yang tertera di struk.');
     } else {
-      setOrder(fetchedData as unknown as OrderWithItems);
+      const orderData = fetchedData as unknown as OrderWithItems;
+      setOrder(orderData);
       // Optional: automatically format input to show the found short ID or name
       if (!isFullUUID && !searchId) {
-        setOrderId(`#${(fetchedData as any).order_code || (fetchedData as any).id.toString().split('-')[0].toUpperCase()}`);
+        setOrderId(`#${orderData.order_code || orderData.id.toString().split('-')[0].toUpperCase()}`);
       }
     }
     setLoading(false);

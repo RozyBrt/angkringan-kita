@@ -42,7 +42,7 @@ export function useRealtimeOrders() {
   }, []);
 
   useEffect(() => {
-    let channel: any;
+    let channel: ReturnType<typeof supabase.channel>;
 
     const setupSubscription = () => {
       channel = supabase

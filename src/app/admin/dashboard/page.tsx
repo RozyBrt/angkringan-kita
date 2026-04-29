@@ -250,7 +250,7 @@ function OrderCard({ order, onCompleteAndPay, onReprint }: { order: OrderWithIte
       </div>
 
       <div className="space-y-3 mb-8 flex-grow">
-        {order.order_items?.map((item: any, idx: number) => (
+        {order.order_items?.map((item, idx: number) => (
           <div key={idx} className="flex justify-between items-center bg-coffee-950/30 p-3 rounded-xl border border-coffee-800/30 group-hover:border-coffee-700/50 transition-colors">
             <div className="flex flex-col">
               <span className="text-cream-200 font-medium text-sm">
@@ -268,7 +268,7 @@ function OrderCard({ order, onCompleteAndPay, onReprint }: { order: OrderWithIte
       {order.note && (
         <div className="mb-6 p-3 bg-warm-900/10 border border-warm-800/20 rounded-xl flex items-start gap-2">
           <AlertCircle size={14} className="text-warm-400 mt-0.5 flex-shrink-0" />
-          <p className="text-xs text-warm-200/70 italic leading-relaxed">"{order.note}"</p>
+          <p className="text-xs text-warm-200/70 italic leading-relaxed">&quot;{order.note}&quot;</p>
         </div>
       )}
 

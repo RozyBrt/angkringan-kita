@@ -112,7 +112,7 @@ export default function OrderReceipt({ order }: OrderReceiptProps) {
       </div>
 
       <div className="text-center mt-6 italic space-y-1">
-        <p>"Matur nuwun bray, ojo lali mampir meneh!"</p>
+        <p>&quot;Matur nuwun bray, ojo lali mampir meneh!&quot;</p>
         <p className="text-[8px] not-italic opacity-50">Powered by Angkringan Kita Digital</p>
       </div>
     </div>
