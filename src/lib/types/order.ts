@@ -19,6 +19,9 @@ export interface Order {
   served_at?: string | null;
   note?: string | null;
   total_price?: number;
+  order_code?: string;
+  payment_status: 'unpaid' | 'paid';
+  payment_method?: string | null;
 }
 
 export interface OrderItem {

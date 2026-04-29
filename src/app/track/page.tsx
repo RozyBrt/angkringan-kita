@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase/client';
 import { OrderWithItems, OrderStatus } from '@/lib/types/order';
 import { formatPrice } from '@/lib/cart';
-import { Search, Clock, CheckCircle2, Home, ClipboardList, AlertCircle, ChefHat, PackageCheck, Coffee } from 'lucide-react';
+import { Search, Clock, CheckCircle2, Home, ClipboardList, AlertCircle, ChefHat, PackageCheck, Coffee, Trash2, X } from 'lucide-react';
 
 function TrackContent() {
   const searchParams = useSearchParams();
@@ -18,12 +18,26 @@ function TrackContent() {
   const [error, setError] = useState<string | null>(null);
   interface RecentOrder {
     id: string;
+    order_code?: string;
     name?: string;
     time?: string;
     status?: string;
   }
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [matchingOrders, setMatchingOrders] = useState<OrderWithItems[]>([]);
+  
+  // Custom Modal State
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
 
   // Load recent order IDs from localStorage
   useEffect(() => {
@@ -55,6 +69,34 @@ function TrackContent() {
       /* ignore */
     }
   }, []);
+
+  const clearAllHistory = () => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Hapus Semua Riwayat?',
+      message: 'Semua daftar pesanan terakhirmu akan dihapus permanen dari browser ini.',
+      onConfirm: () => {
+        localStorage.removeItem('angkringan_recent_orders');
+        setRecentOrders([]);
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+      }
+    });
+  };
+
+  const removeHistoryItem = (e: React.MouseEvent, id: string | number) => {
+    e.stopPropagation();
+    setConfirmModal({
+      isOpen: true,
+      title: 'Hapus Pesanan Ini?',
+      message: 'Pesanan ini akan dihapus dari daftar riwayat terakhirmu.',
+      onConfirm: () => {
+        const updated = recentOrders.filter(ro => ro.id !== id);
+        setRecentOrders(updated);
+        localStorage.setItem('angkringan_recent_orders', JSON.stringify(updated));
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+      }
+    });
+  };
 
   // ... (auto search omitted here to save space but keeping it intact below)
   // Auto-search if query param provided
@@ -91,35 +133,55 @@ function TrackContent() {
       fetchedData = data;
       fetchError = error;
     } else {
-      // 2. Short ID match (Check in recentOrders memory)
-      const matchedLocal = recentOrders.find(ro =>
-        ro.id.toUpperCase().startsWith(cleanQuery.toUpperCase())
-      );
+      // 2. Try matching order_code (8-digit)
+      const { data: codeData } = await supabase
+        .from('orders')
+        .select('*, order_items(*, menu_items(*))')
+        .eq('order_code', cleanQuery.toUpperCase())
+        .maybeSingle();
 
-      if (matchedLocal) {
-        const { data, error } = await supabase
-          .from('orders')
-          .select('*, order_items(*, menu_items(*))')
-          .eq('id', matchedLocal.id)
-          .single();
-        fetchedData = data;
-        fetchError = error;
+      if (codeData) {
+        fetchedData = codeData;
       } else {
-        // 3. Fallback: Search by Customer Name
-        const { data, error } = await supabase
-          .from('orders')
-          .select('*, order_items(*, menu_items(*))')
-          .ilike('customer_name', `%${cleanQuery}%`)
-          .order('created_at', { ascending: false })
-          .limit(10);
+        // 3. Try matching short ID from local history
+        const matchedLocal = recentOrders.find(ro =>
+          ro.id.toString().toUpperCase().startsWith(cleanQuery.toUpperCase()) ||
+          ro.order_code?.toUpperCase() === cleanQuery.toUpperCase()
+        );
 
-        if (data && data.length > 1) {
-          setMatchingOrders(data as OrderWithItems[]);
-          setLoading(false);
-          return;
-        } else {
-          fetchedData = data?.[0];
+        if (matchedLocal) {
+          const { data, error } = await supabase
+            .from('orders')
+            .select('*, order_items(*, menu_items(*))')
+            .eq('id', matchedLocal.id)
+            .single();
+          fetchedData = data;
           fetchError = error;
+        } else {
+          // 4. Fallback: Search by Customer Name
+          const { data, error } = await supabase
+            .from('orders')
+            .select('*, order_items(*, menu_items(*))')
+            .ilike('customer_name', `%${cleanQuery}%`)
+            .order('created_at', { ascending: false });
+          
+          if (data && data.length > 0) {
+            if (data.length === 1) {
+              // Only one result, fetch full details
+              const { data: fullOrder } = await supabase
+                .from('orders')
+                .select('*, order_items(*, menu_items(*))')
+                .eq('id', data[0].id)
+                .single();
+              fetchedData = fullOrder;
+            } else {
+              setMatchingOrders(data as OrderWithItems[]);
+              setLoading(false);
+              return;
+            }
+          } else {
+            fetchError = error || { message: 'Pesanan tidak ditemukan' };
+          }
         }
       }
     }
@@ -130,7 +192,7 @@ function TrackContent() {
       setOrder(fetchedData as unknown as OrderWithItems);
       // Optional: automatically format input to show the found short ID or name
       if (!isFullUUID && !searchId) {
-        setOrderId(`#${fetchedData.id.toString().split('-')[0].toUpperCase()}`);
+        setOrderId(`#${(fetchedData as any).order_code || (fetchedData as any).id.toString().split('-')[0].toUpperCase()}`);
       }
     }
     setLoading(false);
@@ -278,42 +340,58 @@ function TrackContent() {
 
       {/* Recent Orders */}
       {recentOrders.length > 0 && !order && matchingOrders.length === 0 && (
-        <div className="mb-6">
-          <p className="text-xs font-medium text-coffee-400 mb-2">Pilih Pesanan Terakhirmu:</p>
+        <div className="mb-10 animate-fade-in">
+          <div className="flex justify-between items-end mb-3">
+            <p className="text-xs font-bold text-coffee-400 uppercase tracking-widest">Pesanan Terakhirmu</p>
+            <button 
+              onClick={clearAllHistory}
+              className="text-[10px] font-bold text-red-400 hover:text-red-600 transition-colors flex items-center gap-1"
+            >
+              <Trash2 size={10} /> Hapus Semua
+            </button>
+          </div>
           <div className="flex flex-col sm:flex-row flex-wrap gap-2">
             {recentOrders.map((ro) => {
-              const shortId = ro.id.split('-')[0].toUpperCase();
+              const displayId = ro.order_code || ro.id.toString().split('-')[0].toUpperCase();
               const timeStr = ro.time ? new Date(ro.time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
 
               return (
-                <button
-                  key={ro.id}
-                  onClick={() => {
-                    setOrderId(ro.id);
-                    handleSearch(ro.id);
-                  }}
-                  className="px-4 py-2.5 bg-cream-100 text-coffee-700 rounded-xl text-sm 
-                             font-medium hover:bg-cream-200 transition-colors text-left sm:text-center shadow-sm"
-                >
-                  <div className="font-semibold text-coffee-900 border-b border-coffee-200/50 pb-1 mb-1 leading-none">
-                    {ro.name ? `Atas Nama: ${ro.name}` : `Tanpa Nama`}
-                  </div>
-                  <div className="flex items-center gap-1.5 text-xs font-mono mt-1.5 w-full">
-                    <span className="text-coffee-500">#{shortId}</span>
-                    {timeStr && <span className="text-coffee-400 border-l border-coffee-200/50 pl-1.5">{timeStr}</span>}
-                    {ro.status && (
-                      ro.status === 'served' ? (
-                        <span className="ml-auto inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700 border border-green-200">
-                          <CheckCircle2 size={10} /> Selesai
-                        </span>
-                      ) : (
-                        <span className="ml-auto inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-warm-100 text-warm-700 border border-warm-200">
-                          <Clock size={10} /> Diproses
-                        </span>
-                      )
-                    )}
-                  </div>
-                </button>
+                <div key={ro.id} className="relative group/item">
+                  <button
+                    onClick={() => {
+                      setOrderId(`#${displayId}`);
+                      handleSearch(ro.id.toString());
+                    }}
+                    className="w-full sm:w-auto px-4 py-2.5 bg-coffee-50 border border-coffee-100 text-coffee-800 rounded-xl text-sm 
+                               font-medium hover:bg-coffee-100 transition-colors text-left sm:text-center shadow-sm pr-8 sm:pr-4"
+                  >
+                    <div className="font-bold text-coffee-900 border-b border-coffee-200/50 pb-1 mb-1 leading-none">
+                      Atas Nama: {ro.name || 'Pelanggan'}
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs font-mono mt-1.5 w-full">
+                      <span className="text-coffee-500">#{displayId}</span>
+                      {timeStr && <span className="text-coffee-400 border-l border-coffee-200/50 pl-1.5">{timeStr}</span>}
+                      {ro.status && (
+                        ro.status === 'served' ? (
+                          <span className="ml-auto inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700 border border-green-200">
+                            <CheckCircle2 size={10} /> Selesai
+                          </span>
+                        ) : (
+                          <span className="ml-auto inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-warm-100 text-warm-700 border border-warm-200">
+                            <Clock size={10} /> Diproses
+                          </span>
+                        )
+                      )}
+                    </div>
+                  </button>
+                  <button 
+                    onClick={(e) => removeHistoryItem(e, ro.id)}
+                    className="absolute top-1 right-1 p-1 text-coffee-300 hover:text-red-500 opacity-0 group-hover/item:opacity-100 transition-opacity bg-white/50 rounded-lg backdrop-blur-sm sm:static sm:opacity-0 sm:hidden lg:flex lg:absolute"
+                    title="Hapus dari riwayat"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
               );
             })}
           </div>
@@ -328,14 +406,14 @@ function TrackContent() {
           </p>
           <div className="flex flex-col sm:flex-row flex-wrap gap-2">
             {matchingOrders.map((mo) => {
-              const shortId = mo.id.toString().split('-')[0].toUpperCase();
+              const displayId = mo.order_code || mo.id.toString().split('-')[0].toUpperCase();
               const timeStr = new Date(mo.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 
               return (
                 <button
                   key={mo.id}
                   onClick={() => {
-                    setOrderId(`#${shortId}`);
+                    setOrderId(`#${displayId}`);
                     setOrder(mo);
                     setMatchingOrders([]);
                   }}
@@ -346,7 +424,7 @@ function TrackContent() {
                     Atas Nama: {mo.customer_name}
                   </div>
                   <div className="flex items-center gap-1.5 text-xs font-mono mt-1.5 w-full">
-                    <span className="text-coffee-500">#{shortId}</span>
+                    <span className="text-coffee-500">#{displayId}</span>
                     {timeStr && <span className="text-coffee-400 border-l border-coffee-200/50 pl-1.5">{timeStr}</span>}
                     {mo.status === 'served' ? (
                       <span className="ml-auto inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700 border border-green-200">
@@ -380,7 +458,6 @@ function TrackContent() {
       {order && (
         <div className="card p-5 animate-slide-up">
           {/* Status Banner */}
-          {/* Status Banner */}
           {statusInfo && (
             <div className={`flex items-center gap-3 p-4 rounded-xl mb-4 border ${statusInfo.bgColor} ${statusInfo.borderColor}`}>
               <div className="flex-shrink-0">
@@ -396,6 +473,15 @@ function TrackContent() {
               </div>
             </div>
           )}
+
+          <div className="mb-6 p-4 bg-coffee-50 rounded-xl">
+            <p className="text-[10px] text-coffee-400 font-bold uppercase tracking-widest mb-0.5">
+              Nomor Pesanan
+            </p>
+            <p className="font-display font-bold text-2xl text-coffee-900">
+              #{order.order_code || order.id.toString().split('-')[0].toUpperCase()}
+            </p>
+          </div>
 
           {/* Order Details */}
           <div className="space-y-3">
@@ -461,6 +547,36 @@ function TrackContent() {
             <Home size={14} />
             Kembali ke Menu
           </Link>
+        </div>
+      )}
+      {/* CUSTOM CONFIRM MODAL */}
+      {confirmModal.isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full shadow-2xl border border-cream-100 animate-slide-up">
+            <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mb-6 mx-auto">
+              <Trash2 size={32} className="text-red-500" />
+            </div>
+            <h3 className="text-2xl font-display font-bold text-coffee-900 text-center mb-2">
+              {confirmModal.title}
+            </h3>
+            <p className="text-coffee-500 text-center text-sm mb-8 leading-relaxed">
+              {confirmModal.message}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                className="flex-1 py-3.5 px-4 bg-zinc-100 hover:bg-zinc-200 text-zinc-600 rounded-xl font-bold transition-all active:scale-95"
+              >
+                Batal
+              </button>
+              <button
+                onClick={confirmModal.onConfirm}
+                className="flex-1 py-3.5 px-4 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold transition-all active:scale-95 shadow-lg shadow-red-200"
+              >
+                Ya, Hapus
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

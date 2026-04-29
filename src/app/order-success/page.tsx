@@ -3,8 +3,8 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
-import { OrderWithItems } from '@/types';
+import { supabase } from '@/lib/supabase/client';
+import { OrderWithItems } from '@/lib/types/order';
 import { formatPrice } from '@/lib/cart';
 import { CheckCircle2, Home, Clock } from 'lucide-react';
 
@@ -82,7 +82,7 @@ function OrderSuccessContent() {
               Nomor Pesanan
             </p>
             <p className="font-display font-bold text-4xl tracking-wider text-coffee-900">
-              #{order.id.split('-')[0].toUpperCase()}
+              #{order.order_code || order.id.toString().split('-')[0].toUpperCase()}
             </p>
           </div>
 
@@ -93,44 +93,44 @@ function OrderSuccessContent() {
                 <p className="font-bold text-coffee-900">{order.customer_name}</p>
               </div>
               <span className="badge-pending">
-              <Clock size={11} />
-              Menunggu
-            </span>
-          </div>
+                <Clock size={11} />
+                Menunggu
+              </span>
+            </div>
 
-          {order.note && (
+            {order.note && (
+              <div>
+                <p className="text-xs text-coffee-400 mb-0.5">Catatan</p>
+                <p className="text-coffee-700 text-sm">{order.note}</p>
+              </div>
+            )}
+
             <div>
-              <p className="text-xs text-coffee-400 mb-0.5">Catatan</p>
-              <p className="text-coffee-700 text-sm">{order.note}</p>
+              <p className="text-xs text-coffee-400 mb-2">Pesanan</p>
+              <div className="space-y-1.5">
+                {order.order_items?.map((oi) => (
+                  <div
+                    key={oi.id}
+                    className="flex justify-between text-sm text-coffee-700"
+                  >
+                    <span>
+                      {oi.menu_items?.name} × {oi.quantity}
+                    </span>
+                    <span className="font-medium tabular-nums">
+                      {formatPrice(oi.subtotal)}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
-          )}
 
-          <div>
-            <p className="text-xs text-coffee-400 mb-2">Pesanan</p>
-            <div className="space-y-1.5">
-              {order.order_items?.map((oi) => (
-                <div
-                  key={oi.id}
-                  className="flex justify-between text-sm text-coffee-700"
-                >
-                  <span>
-                    {oi.menu_items?.name} × {oi.quantity}
-                  </span>
-                  <span className="font-medium tabular-nums">
-                    {formatPrice(oi.subtotal)}
-                  </span>
-                </div>
-              ))}
+            <div className="border-t border-cream-200 pt-3 flex justify-between">
+              <span className="font-bold text-coffee-900">Total</span>
+              <span className="font-bold text-coffee-800 text-lg tabular-nums">
+                {formatPrice(order.total_amount || order.total_price || 0)}
+              </span>
             </div>
           </div>
-
-          <div className="border-t border-cream-200 pt-3 flex justify-between">
-            <span className="font-bold text-coffee-900">Total</span>
-            <span className="font-bold text-coffee-800 text-lg tabular-nums">
-              {formatPrice(order.total_price)}
-            </span>
-          </div>
-        </div>
         </>
       )}
 
@@ -145,7 +145,7 @@ function OrderSuccessContent() {
         </Link>
         {order && (
           <a
-            href={`https://wa.me/6281234567890?text=${encodeURIComponent(`Halo min, saya pesen yaa\n\nNama: *${order.customer_name}*\nID Pesanan: ${order.id}\nCatatan: ${order.note || '-'}\nTotal: *${formatPrice(order.total_price)}*\n\nBisa langsung diproses? Makasih.`)}`}
+            href={`https://wa.me/6281234567890?text=${encodeURIComponent(`Halo min, saya pesen yaa\n\nNama: *${order.customer_name}*\nID Pesanan: ${order.order_code || order.id}\nCatatan: ${order.note || '-'}\nTotal: *${formatPrice(order.total_amount || order.total_price || 0)}*\n\nBisa langsung diproses? Makasih.`)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 bg-[#25D366] text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-[#20bd5a] active:scale-95 transition-all shadow-md"

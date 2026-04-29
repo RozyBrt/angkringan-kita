@@ -43,19 +43,37 @@ export default function CheckoutPage() {
     setLoading(true);
     setError(null);
 
+    const cleanTableNumber = tableNumber.trim();
+
     try {
       const noteText = [
-        tableNumber ? `Meja: ${tableNumber}` : '',
+        cleanTableNumber ? `Meja: ${cleanTableNumber}` : '',
         note,
       ]
         .filter(Boolean)
         .join(' | ');
 
+      // 1. Validasi: Cek apakah meja sedang digunakan oleh pesanan aktif lain
+      if (cleanTableNumber) {
+        const { data: existingOrder } = await supabase
+          .from('orders')
+          .select('id')
+          .eq('table_number', cleanTableNumber)
+          .not('status', 'in', '("served","cancelled")') // Mencari yang belum selesai
+          .maybeSingle();
+
+        if (existingOrder) {
+          setError(`Waduh bray, Meja ${cleanTableNumber} masih ada pesanan aktif. Silakan tunggu atau pilih meja lain ya!`);
+          setLoading(false);
+          return;
+        }
+      }
+
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
           customer_name: customerName.trim(),
-          table_number: tableNumber || null,
+          table_number: cleanTableNumber || null,
           note: noteText || null,
           total_price: total,
           total_amount: total,
@@ -70,6 +88,7 @@ export default function CheckoutPage() {
         order_id: order.id,
         menu_item_id: item.menuItem.id,
         quantity: item.quantity,
+        price: item.menuItem.price,
         subtotal: item.menuItem.price * item.quantity,
       }));
 
@@ -85,7 +104,7 @@ export default function CheckoutPage() {
       // Simpan riwayat pesanan (lengkap dengan nama) ke localStorage untuk tracking
       try {
         const stored = localStorage.getItem('angkringan_recent_orders');
-        let recent: Array<{ id: string; name?: string; time?: string } | string> = [];
+        let recent: Array<{ id: string; order_code?: string; name?: string; time?: string } | string> = [];
         if (stored) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed)) recent = parsed;
@@ -93,6 +112,7 @@ export default function CheckoutPage() {
 
         recent.unshift({
           id: order.id,
+          order_code: order.order_code,
           name: order.customer_name,
           time: new Date().toISOString()
         });

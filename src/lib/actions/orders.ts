@@ -18,3 +18,23 @@ export async function updateOrderStatus(orderId: string | number, newStatus: Ord
   revalidatePath('/admin/dashboard'); // Biar data di dashboard langsung seger
   return { success: true };
 }
+
+export async function completeAndPayOrder(orderId: string | number, paymentMethod: string = 'Tunai') {
+  const { error } = await supabase
+    .from('orders')
+    .update({ 
+      status: 'served',
+      payment_status: 'paid',
+      payment_method: paymentMethod,
+      served_at: new Date().toISOString()
+    })
+    .eq('id', orderId);
+
+  if (error) {
+    console.error('Gagal menyelesaikan pesanan:', error);
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath('/admin/dashboard');
+  return { success: true };
+}
