@@ -15,10 +15,14 @@ export function useRealtimeOrders() {
 
   const playNotification = useCallback(() => {
     try {
+      console.log('🎵 Mencoba membunyikan notifikasi...');
       const audio = new Audio('/sounds/notification.mp3');
-      audio.play().catch(e => console.warn('Audio play blocked:', e));
+      audio.volume = 0.8;
+      audio.play().catch(e => {
+        console.warn('🔇 Audio diblokir browser bray! Kamu harus klik di halaman ini dulu sekali biar suaranya bisa bunyi.', e);
+      });
     } catch (e) {
-      console.error('Audio error:', e);
+      console.error('❌ Gagal memutar audio:', e);
     }
   }, []);
 
@@ -42,41 +46,34 @@ export function useRealtimeOrders() {
   }, []);
 
   useEffect(() => {
-    let channel: ReturnType<typeof supabase.channel>;
-
-    const setupSubscription = () => {
-      channel = supabase
-        .channel('db-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
-          if (payload.eventType === 'INSERT') playNotification();
-          fetchOrders();
-        })
-        .subscribe((status) => {
-          console.log('Realtime Status:', status);
-          if (status === 'SUBSCRIBED') {
-            setConnectionStatus('CONNECTED');
-            retryCount.current = 0;
-          } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-            setConnectionStatus('ERROR');
-            
-            // RECONNECT LOGIC (Max 3x)
-            if (retryCount.current < MAX_RETRIES) {
-              retryCount.current++;
-              console.log(`Reconnecting... (${retryCount.current}/${MAX_RETRIES})`);
-              setConnectionStatus('CONNECTING');
-              setTimeout(setupSubscription, 3000); // Tunggu 3 detik sebelum coba lagi
-            } else {
-              setError('Koneksi gagal setelah beberapa kali percobaan. Silakan refresh halaman.');
-            }
-          }
-        });
-    };
-
+    // Pancing data awal
     fetchOrders();
-    setupSubscription();
+
+    // Buat nama channel unik tiap kali komponen ini muncul
+    const channelId = `admin_db_${Math.random().toString(36).slice(2, 7)}`;
+    const channel = supabase
+      .channel(channelId)
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'orders' 
+      }, (payload) => {
+        console.log('🔔 NOTIFIKASI MASUK:', payload.eventType, payload);
+        fetchOrders();
+        
+        if (payload.eventType === 'INSERT') {
+          playNotification();
+        }
+      })
+      .subscribe((status) => {
+        console.log(`📡 Koneksi [${channelId}] status:`, status);
+        if (status === 'SUBSCRIBED') setConnectionStatus('CONNECTED');
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setConnectionStatus('ERROR');
+      });
 
     return () => {
-      if (channel) supabase.removeChannel(channel);
+      console.log(`🔌 Memutus koneksi [${channelId}]`);
+      supabase.removeChannel(channel);
     };
   }, [fetchOrders, playNotification]);
 

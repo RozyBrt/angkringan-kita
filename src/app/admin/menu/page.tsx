@@ -17,6 +17,7 @@ import {
   ToggleLeft,
   ToggleRight,
 } from 'lucide-react';
+import { createMenuItem, updateMenuItem, deleteMenuItem, toggleMenuItemAvailability } from '@/lib/actions/menu';
 
 const CATEGORY_OPTIONS: Category[] = ['Minuman', 'Cemilan', 'Makanan'];
 
@@ -117,21 +118,18 @@ export default function AdminMenuPage() {
     };
 
     if (editingItem) {
-      // Update
-      const { error } = await supabase
-        .from('menu_items')
-        .update(payload)
-        .eq('id', editingItem.id);
-      if (error) {
-        setFormError(error.message);
+      // Update pake Server Action bray
+      const res = await updateMenuItem(editingItem.id, payload as any);
+      if (!res.success) {
+        setFormError(res.error || 'Gagal update menu');
         setSaving(false);
         return;
       }
     } else {
-      // Insert
-      const { error } = await supabase.from('menu_items').insert(payload);
-      if (error) {
-        setFormError(error.message);
+      // Insert pake Server Action bray
+      const res = await createMenuItem(payload as any);
+      if (!res.success) {
+        setFormError(res.error || 'Gagal tambah menu');
         setSaving(false);
         return;
       }
@@ -143,23 +141,27 @@ export default function AdminMenuPage() {
   }
 
   async function handleDelete(id: string) {
+    if (!confirm('Yakin mau hapus menu ini bray?')) return;
     setDeleting(id);
-    await supabase.from('menu_items').delete().eq('id', id);
-    await fetchMenu();
+    const res = await deleteMenuItem(id);
+    if (!res.success) {
+      alert('Gagal hapus bray: ' + res.error);
+    } else {
+      await fetchMenu();
+    }
     setDeleting(null);
   }
 
   async function toggleAvailability(item: MenuItem) {
-    const { error } = await supabase
-      .from('menu_items')
-      .update({ is_available: !item.is_available })
-      .eq('id', item.id);
-    if (!error) {
+    const res = await toggleMenuItemAvailability(item.id, item.is_available);
+    if (res.success) {
       setMenuItems((prev) =>
         prev.map((m) =>
           m.id === item.id ? { ...m, is_available: !m.is_available } : m
         )
       );
+    } else {
+      alert('Gagal ubah status ketersediaan bray');
     }
   }
 

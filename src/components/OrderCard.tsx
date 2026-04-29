@@ -1,14 +1,14 @@
 'use client';
 
-import { OrderWithItems } from '@/types';
+import { OrderWithItems, OrderStatus } from '@/lib/types/order';
 import { formatPrice } from '@/lib/cart';
-import { supabase } from '@/lib/supabase';
+import { updateOrderStatus } from '@/lib/actions/orders';
 import { CheckCheck, Clock, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 
 interface OrderCardProps {
   order: OrderWithItems;
-  onStatusChange: (orderId: string, status: 'pending' | 'done') => void;
+  onStatusChange: (orderId: string | number, status: OrderStatus) => void;
   isNew?: boolean;
 }
 
@@ -16,19 +16,25 @@ export default function OrderCard({ order, onStatusChange, isNew = false }: Orde
   const [expanded, setExpanded] = useState(false);
   const [updating, setUpdating] = useState(false);
 
-  const isDone = order.status === 'done';
-
-  async function toggleStatus() {
+  async function handleUpdate(nextStatus: OrderStatus) {
     setUpdating(true);
-    const newStatus = isDone ? 'pending' : 'done';
+    const res = await updateOrderStatus(order.id, nextStatus);
+    if (res.success) {
+      onStatusChange(order.id, nextStatus);
+    } else {
+      alert('Gagal update status: ' + res.error);
+    }
+    setUpdating(false);
+  }
 
-    const { error } = await supabase
-      .from('orders')
-      .update({ status: newStatus })
-      .eq('id', order.id);
-
-    if (!error) {
-      onStatusChange(order.id, newStatus);
+  async function handlePay() {
+    setUpdating(true);
+    const { completeAndPayOrder } = await import('@/lib/actions/orders');
+    const res = await completeAndPayOrder(order.id);
+    if (res.success) {
+      onStatusChange(order.id, 'served');
+    } else {
+      alert('Gagal proses pembayaran: ' + res.error);
     }
     setUpdating(false);
   }
@@ -41,12 +47,23 @@ export default function OrderCard({ order, onStatusChange, isNew = false }: Orde
     minute: '2-digit',
   });
 
+  const statusConfig = {
+    pending: { label: 'Menunggu', nextLabel: 'Konfirmasi', nextStatus: 'confirmed', color: 'bg-coffee-600 text-white' },
+    confirmed: { label: 'Dikonfirmasi', nextLabel: 'Mulai Masak', nextStatus: 'preparing', color: 'bg-blue-600 text-white' },
+    preparing: { label: 'Dimasak', nextLabel: 'Siap Sajikan', nextStatus: 'ready', color: 'bg-orange-600 text-white' },
+    ready: { label: 'Siap', nextLabel: 'Selesai & Bayar', nextStatus: 'served', color: 'bg-green-600 text-white' },
+    served: { label: 'Selesai', nextLabel: null, nextStatus: null, color: 'bg-coffee-700 text-coffee-400' },
+    cancelled: { label: 'Dibatalkan', nextLabel: null, nextStatus: null, color: 'bg-red-900/30 text-red-400' },
+  };
+
+  const config = statusConfig[order.status as keyof typeof statusConfig] || statusConfig.pending;
+
   return (
     <div
       className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
         isNew
           ? 'bg-coffee-800 border-warm-500 ring-2 ring-warm-500/30 animate-pulse-soft'
-          : isDone
+          : order.status === 'served'
           ? 'bg-coffee-900/60 border-coffee-800 opacity-70'
           : 'bg-coffee-800 border-coffee-700'
       }`}
@@ -56,7 +73,7 @@ export default function OrderCard({ order, onStatusChange, isNew = false }: Orde
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <span className="font-bold text-cream-100 text-base">
-              {order.customer_name} <span className="text-coffee-400 font-mono text-sm ml-1">#{order.id.split('-')[0].toUpperCase()}</span>
+              {order.customer_name} <span className="text-coffee-400 font-mono text-sm ml-1">#{order.id.toString().split('-')[0].toUpperCase()}</span>
             </span>
             {isNew && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-warm-500 text-white">
@@ -64,22 +81,11 @@ export default function OrderCard({ order, onStatusChange, isNew = false }: Orde
                 Baru!
               </span>
             )}
-            {isDone ? (
-              <span className="badge-done">
-                <CheckCheck size={11} />
-                Selesai
-              </span>
-            ) : (
-              <span className="badge-pending">
-                <Clock size={11} />
-                Menunggu
-              </span>
-            )}
+            <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-coffee-700 bg-coffee-900/50 text-coffee-300`}>
+              {config.label}
+            </span>
           </div>
           <p className="text-coffee-400 text-xs">{createdAt}</p>
-          {order.note && (
-            <p className="text-coffee-300 text-xs mt-1 italic">📝 {order.note}</p>
-          )}
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -89,7 +95,6 @@ export default function OrderCard({ order, onStatusChange, isNew = false }: Orde
           <button
             onClick={() => setExpanded((v) => !v)}
             className="text-coffee-400 hover:text-coffee-200 transition-colors p-1"
-            aria-label={expanded ? 'Ciutkan' : 'Buka detail'}
           >
             {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </button>
@@ -114,33 +119,23 @@ export default function OrderCard({ order, onStatusChange, isNew = false }: Orde
 
       {/* Action */}
       <div className="px-4 pb-4">
-        <button
-          id={`toggle-order-${order.id}`}
-          onClick={toggleStatus}
-          disabled={updating}
-          className={`w-full py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 
-                      active:scale-95 flex items-center justify-center gap-2
-                      ${
-                        isDone
-                          ? 'bg-coffee-700 text-coffee-300 hover:bg-coffee-600'
-                          : 'bg-green-600 text-white hover:bg-green-500'
-                      }
-                      disabled:opacity-50 disabled:cursor-not-allowed`}
-        >
-          {updating ? (
-            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-          ) : isDone ? (
-            <>
-              <Clock size={15} />
-              Tandai Menunggu
-            </>
-          ) : (
-            <>
-              <CheckCheck size={15} />
-              Tandai Selesai
-            </>
-          )}
-        </button>
+        {config.nextLabel && (
+          <button
+            onClick={() => config.nextStatus === 'served' ? handlePay() : handleUpdate(config.nextStatus as any)}
+            disabled={updating}
+            className={`w-full py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 
+                        active:scale-95 flex items-center justify-center gap-2 ${config.color}
+                        disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            {updating ? (
+              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <>
+                {config.nextLabel}
+              </>
+            )}
+          </button>
+        )}
       </div>
     </div>
   );

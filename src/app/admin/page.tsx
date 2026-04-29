@@ -13,8 +13,9 @@ import {
   ShoppingBag,
   Bell,
 } from 'lucide-react';
+import { updateOrderStatus } from '@/lib/actions/orders';
 
-type FilterStatus = 'all' | 'pending' | 'done';
+type FilterStatus = 'all' | 'pending' | 'served';
 
 export default function AdminPage() {
   const [session, setSession] = useState<unknown>(null);
@@ -108,10 +109,16 @@ export default function AdminPage() {
     setOrders([]);
   }
 
-  function handleStatusChange(orderId: string, status: 'pending' | 'done') {
-    setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status } : o))
-    );
+  async function handleStatusChange(orderId: string | number, status: 'pending' | 'served') {
+    // Pake Server Action biar tembus RLS bray
+    const res = await updateOrderStatus(orderId, status as any);
+    if (res.success) {
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, status: status as any } : o))
+      );
+    } else {
+      alert('Gagal update status bray: ' + res.error);
+    }
   }
 
   // Auth loading state
@@ -134,7 +141,7 @@ export default function AdminPage() {
     : orders.filter((o) => o.status === filter);
 
   const pendingCount = orders.filter((o) => o.status === 'pending').length;
-  const doneCount = orders.filter((o) => o.status === 'done').length;
+  const servedCount = orders.filter((o) => o.status === 'served').length;
 
   return (
     <div className="py-8 animate-fade-in">
@@ -193,7 +200,7 @@ export default function AdminPage() {
           </p>
         </div>
         <div className="bg-green-900/30 rounded-2xl p-4 text-center border border-green-800/40">
-          <p className="text-3xl font-bold text-green-400">{doneCount}</p>
+          <p className="text-3xl font-bold text-green-400">{servedCount}</p>
           <p className="text-green-600 text-xs mt-1 flex items-center justify-center gap-1">
             <CheckCheck size={12} />
             Selesai
@@ -206,7 +213,7 @@ export default function AdminPage() {
         {(
           [
             { value: 'pending', label: 'Menunggu', count: pendingCount },
-            { value: 'done', label: 'Selesai', count: doneCount },
+            { value: 'served', label: 'Selesai', count: servedCount },
             { value: 'all', label: 'Semua', count: orders.length },
           ] as { value: FilterStatus; label: string; count: number }[]
         ).map((tab) => (

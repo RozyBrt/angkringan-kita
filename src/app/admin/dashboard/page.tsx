@@ -17,7 +17,8 @@ import {
   Timer,
   CheckSquare,
   Banknote,
-  Printer
+  Printer,
+  Volume2
 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -41,9 +42,9 @@ export default function AdminDashboard() {
 
   // DASHBOARD STATS logic
   const stats = {
-    pending: orders.filter(o => o.status === 'pending' || o.status === 'confirmed').length,
-    preparing: orders.filter(o => o.status === 'preparing').length,
-    ready: orders.filter(o => o.status === 'ready').length,
+    pending: (orders || []).filter(o => o.status === 'pending' || o.status === 'confirmed').length,
+    preparing: (orders || []).filter(o => o.status === 'preparing').length,
+    ready: (orders || []).filter(o => o.status === 'ready').length,
   };
 
   const handleCompleteAndPay = async (order: OrderWithItems) => {
@@ -111,6 +112,18 @@ export default function AdminDashboard() {
               }`} />
               {connectionStatus}
             </div>
+            <button 
+              onClick={() => {
+                const audio = new Audio('/sounds/notification.mp3');
+                audio.play()
+                  .then(() => alert('🔊 Suara Aman bray! Gembok audio sudah terbuka.'))
+                  .catch(e => alert('❌ Gagal bunyi bray! Klik lagi atau cek speaker. Error: ' + e.message));
+              }}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold border bg-coffee-800/30 text-coffee-300 border-coffee-700/50 hover:bg-coffee-700 transition-all active:scale-95"
+            >
+              <Volume2 size={12} />
+              Test Suara
+            </button>
           </div>
         </div>
         
@@ -150,7 +163,7 @@ export default function AdminDashboard() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 print:hidden">
-          {orders.map((order) => (
+          {orders && orders.length > 0 && orders.map((order) => (
             <OrderCard 
               key={order.id} 
               order={order} 
