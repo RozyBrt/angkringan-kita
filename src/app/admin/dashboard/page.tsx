@@ -2,6 +2,18 @@
 
 import { useRealtimeOrders } from '@/hooks/useRealtimeOrders';
 import { updateOrderStatus } from '@/lib/actions/orders';
+import { 
+  Clock, 
+  ChefHat, 
+  PackageCheck, 
+  Coffee as CoffeeIcon, 
+  XCircle, 
+  CheckCircle2, 
+  AlertCircle,
+  LayoutDashboard,
+  Timer,
+  CheckSquare
+} from 'lucide-react';
 
 export default function AdminDashboard() {
   const { orders } = useRealtimeOrders();
@@ -14,122 +26,191 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="p-8 bg-zinc-950 min-h-screen text-white">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
-        <h1 className="text-3xl font-bold">Dashboard Angkringan Kita 🚀</h1>
-
-        {/* STATS CARDS */}
-        <div className="flex gap-4">
-          <div className="bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-xl">
-            <p className="text-zinc-500 text-xs uppercase font-bold tracking-wider">Pending</p>
-            <p className="text-xl font-bold text-blue-400">{stats.pending}</p>
+    <div className="py-8 min-h-screen text-cream-100 animate-fade-in">
+      {/* HEADER & STATS HEADER */}
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-10 gap-6">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-8 h-8 rounded-lg bg-coffee-600 flex items-center justify-center">
+              <LayoutDashboard size={18} className="text-cream-100" />
+            </div>
+            <span className="text-coffee-400 font-bold text-sm uppercase tracking-widest">Manajemen Operasional</span>
           </div>
-          <div className="bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-xl">
-            <p className="text-zinc-500 text-xs uppercase font-bold tracking-wider">Masak</p>
-            <p className="text-xl font-bold text-orange-400">{stats.preparing}</p>
-          </div>
-          <div className="bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-xl">
-            <p className="text-zinc-500 text-xs uppercase font-bold tracking-wider">Siap</p>
-            <p className="text-xl font-bold text-green-400">{stats.ready}</p>
-          </div>
+          <h1 className="font-display text-4xl font-bold text-cream-50">Dashboard Dapur 🚀</h1>
+        </div>
+        
+        {/* STATS CARDS - Glassmorphism Style */}
+        <div className="grid grid-cols-3 gap-3 w-full lg:w-auto">
+          <StatCard 
+            label="Pending" 
+            value={stats.pending} 
+            color="blue" 
+            icon={<Timer size={16} />} 
+          />
+          <StatCard 
+            label="Dapur" 
+            value={stats.preparing} 
+            color="orange" 
+            icon={<ChefHat size={16} />} 
+          />
+          <StatCard 
+            label="Siap" 
+            value={stats.ready} 
+            color="green" 
+            icon={<CheckSquare size={16} />} 
+          />
         </div>
       </div>
-
+      
       {orders.length === 0 ? (
-        /* EMPTY STATE */
-        <div className="flex flex-col items-center justify-center py-32 opacity-50 border-2 border-dashed border-zinc-800 rounded-3xl">
-          <span className="text-6xl mb-4">💤</span>
-          <p className="text-xl font-medium">Belum ada pesanan masuk...</p>
-          <p className="text-sm">Santai dulu ga si. ☕</p>
+        /* EMPTY STATE - More Premium */
+        <div className="flex flex-col items-center justify-center py-32 bg-coffee-900/20 border-2 border-dashed border-coffee-800/50 rounded-[2rem] backdrop-blur-sm">
+          <div className="w-24 h-24 bg-coffee-900/50 rounded-full flex items-center justify-center mb-6 border border-coffee-800 animate-bounce-slow">
+            <span className="text-5xl">💤</span>
+          </div>
+          <h2 className="text-2xl font-display font-bold text-cream-200 mb-2">Belum Ada Pesanan Masuk</h2>
+          <p className="text-coffee-400 max-w-xs text-center">
+            Tenang bray, mending seruput kopi dulu sambil nunggu pelanggan dateng. ☕
+          </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {orders.map((order) => (
-            <div key={order.id} className="p-6 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl flex flex-col">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <p className="text-zinc-500 text-sm">Meja {order.table_number || '?'}</p>
-                  <h3 className="text-xl font-bold">{order.customer_name}</h3>
-                </div>
-                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${order.status === 'pending' ? 'bg-zinc-800 text-zinc-400' :
-                  order.status === 'confirmed' ? 'bg-blue-900/30 text-blue-400 border border-blue-800' :
-                    order.status === 'preparing' ? 'bg-orange-900/30 text-orange-400 border border-orange-800' :
-                      order.status === 'ready' ? 'bg-green-900/30 text-green-400 border border-green-800' :
-                        'bg-zinc-800 text-zinc-500'
-                  }`}>
-                  {order.status}
-                </span>
-              </div>
-
-              <div className="space-y-2 mb-6 flex-grow">
-                {order.order_items?.map((item, idx) => (
-                  <div key={idx} className="flex justify-between text-sm">
-                    <span className="text-zinc-300">
-                      {item.menu_items?.name || `Item #${item.menu_item_id.toString().slice(0, 8)}...`}
-                      <span className="text-zinc-500 ml-1">x{item.quantity}</span>
-                    </span>
-                    <span className="text-zinc-400 font-mono text-xs">
-                      {(item.subtotal || 0).toLocaleString('id-ID')}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="pt-4 border-t border-zinc-800 flex flex-col gap-2">
-                {/* STEP 1: Dari Pending ke Confirmed */}
-                {order.status === 'pending' && (
-                  <button
-                    onClick={() => updateOrderStatus(order.id, 'confirmed')}
-                    className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-bold transition shadow-lg shadow-blue-900/20"
-                  >
-                    Konfirmasi Pesanan 🤝
-                  </button>
-                )}
-
-                {/* STEP 2: Dari Confirmed ke Preparing */}
-                {order.status === 'confirmed' && (
-                  <button
-                    onClick={() => updateOrderStatus(order.id, 'preparing')}
-                    className="w-full py-2.5 bg-orange-600 hover:bg-orange-500 rounded-lg text-sm font-bold transition shadow-lg shadow-orange-900/20"
-                  >
-                    Mulai Masak 🔥
-                  </button>
-                )}
-
-                {/* STEP 3: Dari Preparing ke Ready */}
-                {order.status === 'preparing' && (
-                  <button
-                    onClick={() => updateOrderStatus(order.id, 'ready')}
-                    className="w-full py-2.5 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm font-bold transition shadow-lg shadow-purple-900/20"
-                  >
-                    Pesanan Siap! ✅
-                  </button>
-                )}
-
-                {/* STEP 4: Dari Ready ke Served (Selesai) */}
-                {order.status === 'ready' && (
-                  <button
-                    onClick={() => updateOrderStatus(order.id, 'served')}
-                    className="w-full py-2.5 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-sm font-bold transition"
-                  >
-                    Sajikan ke Meja ☕
-                  </button>
-                )}
-
-                {/* BONUS: Tombol Cancel */}
-                {(order.status === 'pending' || order.status === 'confirmed') && (
-                  <button
-                    onClick={() => updateOrderStatus(order.id, 'cancelled')}
-                    className="w-full py-1.5 text-zinc-500 hover:text-red-500 text-xs transition font-medium"
-                  >
-                    Batalkan Pesanan ❌
-                  </button>
-                )}
-              </div>
-            </div>
+            <OrderCard key={order.id} order={order} />
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function StatCard({ label, value, color, icon }: { label: string, value: number, color: 'blue' | 'orange' | 'green', icon: React.ReactNode }) {
+  const colorMap = {
+    blue: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
+    orange: 'text-orange-400 bg-orange-500/10 border-orange-500/20',
+    green: 'text-green-400 bg-green-500/10 border-green-500/20'
+  };
+
+  return (
+    <div className={`px-4 py-3 rounded-2xl border backdrop-blur-md flex flex-col items-center justify-center min-w-[100px] ${colorMap[color]}`}>
+      <div className="flex items-center gap-1.5 mb-1 opacity-80">
+        {icon}
+        <span className="text-[10px] uppercase font-black tracking-tighter">{label}</span>
+      </div>
+      <p className="text-2xl font-black tabular-nums">{value}</p>
+    </div>
+  );
+}
+
+function OrderCard({ order }: { order: any }) {
+  const statusConfig = {
+    pending: { label: 'Pending', class: 'bg-zinc-800/50 text-zinc-400 border-zinc-700/50', icon: <Clock size={12} /> },
+    confirmed: { label: 'Confirmed', class: 'bg-blue-500/10 text-blue-400 border-blue-500/20', icon: <CheckCircle2 size={12} /> },
+    preparing: { label: 'Dapur', class: 'bg-orange-500/10 text-orange-400 border-orange-500/20', icon: <ChefHat size={12} /> },
+    ready: { label: 'Siap', class: 'bg-green-500/10 text-green-400 border-green-500/20', icon: <PackageCheck size={12} /> },
+    served: { label: 'Selesai', class: 'bg-zinc-800/30 text-zinc-500 border-zinc-800', icon: <CoffeeIcon size={12} /> },
+    cancelled: { label: 'Batal', class: 'bg-red-500/10 text-red-400 border-red-500/20', icon: <XCircle size={12} /> },
+  };
+
+  const config = statusConfig[order.status as keyof typeof statusConfig] || statusConfig.pending;
+
+  return (
+    <div className="group bg-coffee-900/40 border border-coffee-800/50 rounded-[2rem] p-6 hover:bg-coffee-900/60 transition-all duration-500 backdrop-blur-sm flex flex-col shadow-2xl shadow-black/20">
+      <div className="flex justify-between items-start mb-6">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[10px] font-bold text-coffee-400 uppercase tracking-widest bg-coffee-950/50 px-2 py-0.5 rounded-md border border-coffee-800/50">
+              Meja {order.table_number || '??'}
+            </span>
+            <span className="text-[10px] text-coffee-500 font-mono">#{order.id.toString().slice(0, 8)}</span>
+          </div>
+          <h3 className="text-2xl font-display font-bold text-cream-50 group-hover:text-cream-400 transition-colors">{order.customer_name}</h3>
+        </div>
+        <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${config.class}`}>
+          {config.icon}
+          {config.label}
+        </div>
+      </div>
+
+      <div className="space-y-3 mb-8 flex-grow">
+        {order.order_items?.map((item: any, idx: number) => (
+          <div key={idx} className="flex justify-between items-center bg-coffee-950/30 p-3 rounded-xl border border-coffee-800/30 group-hover:border-coffee-700/50 transition-colors">
+            <div className="flex flex-col">
+              <span className="text-cream-200 font-medium text-sm">
+                {item.menu_items?.name || `Item #${item.menu_item_id.toString().slice(0, 4)}`}
+              </span>
+              <span className="text-[10px] text-coffee-500 uppercase font-bold tracking-wider">Jumlah: {item.quantity}x</span>
+            </div>
+            <span className="text-cream-400 font-mono text-sm font-bold bg-coffee-950/50 px-2 py-1 rounded-lg">
+              {(item.subtotal || 0).toLocaleString('id-ID')}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {order.note && (
+        <div className="mb-6 p-3 bg-warm-900/10 border border-warm-800/20 rounded-xl flex items-start gap-2">
+          <AlertCircle size={14} className="text-warm-400 mt-0.5 flex-shrink-0" />
+          <p className="text-xs text-warm-200/70 italic leading-relaxed">"{order.note}"</p>
+        </div>
+      )}
+
+      <div className="pt-6 border-t border-coffee-800/50 flex flex-col gap-2">
+        {/* STEP 1: Dari Pending ke Confirmed */}
+        {order.status === 'pending' && (
+          <button 
+            onClick={() => updateOrderStatus(order.id, 'confirmed')}
+            className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl text-sm font-bold transition-all active:scale-95 shadow-lg shadow-blue-900/40 flex items-center justify-center gap-2"
+          >
+            <CheckCircle2 size={18} />
+            Konfirmasi Pesanan
+          </button>
+        )}
+
+        {/* STEP 2: Dari Confirmed ke Preparing */}
+        {order.status === 'confirmed' && (
+          <button 
+            onClick={() => updateOrderStatus(order.id, 'preparing')}
+            className="w-full py-3.5 bg-orange-600 hover:bg-orange-500 text-white rounded-2xl text-sm font-bold transition-all active:scale-95 shadow-lg shadow-orange-900/40 flex items-center justify-center gap-2"
+          >
+            <ChefHat size={18} />
+            Mulai Masak 🔥
+          </button>
+        )}
+
+        {/* STEP 3: Dari Preparing ke Ready */}
+        {order.status === 'preparing' && (
+          <button 
+            onClick={() => updateOrderStatus(order.id, 'ready')}
+            className="w-full py-3.5 bg-cream-500 hover:bg-cream-400 text-coffee-950 rounded-2xl text-sm font-bold transition-all active:scale-95 shadow-lg shadow-cream-900/40 flex items-center justify-center gap-2"
+          >
+            <PackageCheck size={18} />
+            Pesanan Siap! ✅
+          </button>
+        )}
+
+        {/* STEP 4: Dari Ready ke Served (Selesai) */}
+        {order.status === 'ready' && (
+          <button 
+            onClick={() => updateOrderStatus(order.id, 'served')}
+            className="w-full py-3.5 bg-coffee-700 hover:bg-coffee-600 text-cream-100 rounded-2xl text-sm font-bold transition-all active:scale-95 flex items-center justify-center gap-2"
+          >
+            <CoffeeIcon size={18} />
+            Sajikan ke Meja
+          </button>
+        )}
+
+        {/* BONUS: Tombol Cancel */}
+        {(order.status === 'pending' || order.status === 'confirmed') && (
+          <button 
+            onClick={() => updateOrderStatus(order.id, 'cancelled')}
+            className="w-full py-2 text-coffee-500 hover:text-red-500 text-xs transition font-bold uppercase tracking-widest flex items-center justify-center gap-1.5"
+          >
+            <XCircle size={14} />
+            Batalkan
+          </button>
+        )}
+      </div>
     </div>
   );
 }
