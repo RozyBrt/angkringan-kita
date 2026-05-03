@@ -13,12 +13,39 @@ export function useRealtimeOrders() {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Inisialisasi audio sekali saja bray
+  // Inisialisasi audio dan pancingan otomatis bray
   useEffect(() => {
     if (!audioRef.current) {
       audioRef.current = new Audio('/sounds/notification.mp3');
       audioRef.current.volume = 0.8;
     }
+
+    // Fungsi sakti buat ngebuka gembok audio browser
+    const unlockAudio = () => {
+      if (audioRef.current) {
+        // Kita pancing dengan play-pause secepat kilat
+        audioRef.current.play()
+          .then(() => {
+            audioRef.current?.pause();
+            if (audioRef.current) audioRef.current.currentTime = 0;
+            console.log('🔓 Audio otomatis terbuka bray! Siap tempur.');
+            // Kalau sudah terbuka, hapus listener-nya biar nggak menuh-menuhin memori
+            document.removeEventListener('click', unlockAudio);
+            document.removeEventListener('touchstart', unlockAudio);
+          })
+          .catch(() => {
+            // Kalau gagal (karena belum beneran interaksi), biarin aja dulu
+          });
+      }
+    };
+
+    document.addEventListener('click', unlockAudio);
+    document.addEventListener('touchstart', unlockAudio);
+
+    return () => {
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
+    };
   }, []);
 
   const playNotification = useCallback(() => {
