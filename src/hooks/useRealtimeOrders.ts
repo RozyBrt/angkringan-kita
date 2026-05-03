@@ -11,16 +11,24 @@ export function useRealtimeOrders() {
   
   const retryCount = useRef(0);
 
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Inisialisasi audio sekali saja bray
+  useEffect(() => {
+    if (!audioRef.current) {
+      audioRef.current = new Audio('/sounds/notification.mp3');
+      audioRef.current.volume = 0.8;
+    }
+  }, []);
+
   const playNotification = useCallback(() => {
-    try {
+    if (audioRef.current) {
       console.log('🎵 Mencoba membunyikan notifikasi...');
-      const audio = new Audio('/sounds/notification.mp3');
-      audio.volume = 0.8;
-      audio.play().catch(e => {
-        console.warn('🔇 Audio diblokir browser bray! Kamu harus klik di halaman ini dulu sekali biar suaranya bisa bunyi.', e);
+      // Reset ke awal biar bisa bunyi berkali-kali tanpa nunggu selesai
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(e => {
+        console.warn('🔇 Audio masih diblokir browser bray!', e);
       });
-    } catch (e) {
-      console.error('❌ Gagal memutar audio:', e);
     }
   }, []);
 
@@ -75,5 +83,5 @@ export function useRealtimeOrders() {
     };
   }, [fetchOrders, playNotification]);
 
-  return { orders, loading, connectionStatus, refetch: fetchOrders };
+  return { orders, loading, connectionStatus, playNotification, refetch: fetchOrders };
 }

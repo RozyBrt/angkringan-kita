@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 
 export default function AdminDashboard() {
-  const { orders, connectionStatus } = useRealtimeOrders();
+  const { orders, connectionStatus, playNotification } = useRealtimeOrders();
   const [printingOrder, setPrintingOrder] = useState<OrderWithItems | null>(null);
 
   // Custom Modal State
@@ -114,10 +114,8 @@ export default function AdminDashboard() {
             </div>
             <button 
               onClick={() => {
-                const audio = new Audio('/sounds/notification.mp3');
-                audio.play()
-                  .then(() => alert('🔊 Suara Aman bray! Gembok audio sudah terbuka.'))
-                  .catch(e => alert('❌ Gagal bunyi bray! Klik lagi atau cek speaker. Error: ' + e.message));
+                playNotification();
+                alert('🔊 Suara Aman bray! Gembok audio sudah terbuka.');
               }}
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold border bg-coffee-800/30 text-coffee-300 border-coffee-700/50 hover:bg-coffee-700 transition-all active:scale-95"
             >
