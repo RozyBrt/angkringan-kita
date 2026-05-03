@@ -19,9 +19,9 @@ export async function updateOrderStatus(orderId: string | number, newStatus: Ord
 
     revalidatePath('/admin/dashboard');
     return { success: true };
-  } catch (err: any) {
+  } catch (err) {
     console.error('Runtime error in updateOrderStatus:', err);
-    return { success: false, error: err.message || 'Terjadi kesalahan internal server' };
+    return { success: false, error: err instanceof Error ? err.message : 'Terjadi kesalahan internal server' };
   }
 }
 
@@ -45,8 +45,8 @@ export async function completeAndPayOrder(orderId: string | number, paymentMetho
 
     revalidatePath('/admin/dashboard');
     return { success: true };
-  } catch (err: any) {
+  } catch (err) {
     console.error('Runtime error in completeAndPayOrder:', err);
-    return { success: false, error: err.message || 'Terjadi kesalahan internal server' };
+    return { success: false, error: err instanceof Error ? err.message : 'Terjadi kesalahan internal server' };
   }
 }
