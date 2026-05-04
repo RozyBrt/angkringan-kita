@@ -5,13 +5,13 @@ import { useRealtimeOrders } from '@/hooks/useRealtimeOrders';
 import { updateOrderStatus, completeAndPayOrder } from '@/lib/actions/orders';
 import OrderReceipt from '@/components/admin/OrderReceipt';
 import { OrderWithItems } from '@/lib/types/order';
-import { 
-  Clock, 
-  ChefHat, 
-  PackageCheck, 
-  Coffee as CoffeeIcon, 
-  XCircle, 
-  CheckCircle2, 
+import {
+  Clock,
+  ChefHat,
+  PackageCheck,
+  Coffee as CoffeeIcon,
+  XCircle,
+  CheckCircle2,
   AlertCircle,
   LayoutDashboard,
   Timer,
@@ -39,7 +39,7 @@ export default function AdminDashboard() {
     title: '',
     message: '',
     type: 'confirm',
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   // DASHBOARD STATS logic
@@ -102,28 +102,26 @@ export default function AdminDashboard() {
           </div>
           <div className="flex items-center gap-4">
             <h1 className="font-display text-4xl font-bold text-cream-50">Dashboard Dapur 🚀</h1>
-            <Link 
-              href="/admin/analytics" 
+            <Link
+              href="/admin/analytics"
               className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500/20 to-orange-600/20 hover:from-orange-500/30 hover:to-orange-600/30 border border-orange-500/30 text-orange-300 rounded-xl font-bold transition-all active:scale-95 shadow-[0_0_15px_rgba(237,137,54,0.15)] ml-2"
             >
               <TrendingUp size={16} className="text-orange-400" />
               <span className="text-sm">Analitik Cuan</span>
             </Link>
-            <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold border transition-colors ${
-              connectionStatus === 'CONNECTED' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-              connectionStatus === 'CONNECTING' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20 animate-pulse' :
-              connectionStatus === 'RECONNECTING' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20 animate-pulse' :
-              'bg-red-500/10 text-red-400 border-red-500/50 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.3)]'
-            }`}>
-              <div className={`w-1.5 h-1.5 rounded-full ${
-                connectionStatus === 'CONNECTED' ? 'bg-green-400' :
-                connectionStatus === 'CONNECTING' ? 'bg-blue-400' :
-                connectionStatus === 'RECONNECTING' ? 'bg-orange-400' :
-                'bg-red-500'
-              }`} />
+            <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold border transition-colors ${connectionStatus === 'CONNECTED' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                connectionStatus === 'CONNECTING' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20 animate-pulse' :
+                  connectionStatus === 'RECONNECTING' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20 animate-pulse' :
+                    'bg-red-500/10 text-red-400 border-red-500/50 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.3)]'
+              }`}>
+              <div className={`w-1.5 h-1.5 rounded-full ${connectionStatus === 'CONNECTED' ? 'bg-green-400' :
+                  connectionStatus === 'CONNECTING' ? 'bg-blue-400' :
+                    connectionStatus === 'RECONNECTING' ? 'bg-orange-400' :
+                      'bg-red-500'
+                }`} />
               {connectionStatus === 'FAILED' ? 'OFFLINE' : connectionStatus}
             </div>
-            <button 
+            <button
               onClick={() => {
                 playNotification();
                 alert('🔊 Suara Aman bray! Gembok audio sudah terbuka.');
@@ -135,30 +133,30 @@ export default function AdminDashboard() {
             </button>
           </div>
         </div>
-        
+
         {/* STATS CARDS - Glassmorphism Style */}
         <div className="grid grid-cols-3 gap-3 w-full lg:w-auto">
-          <StatCard 
-            label="Pending" 
-            value={stats.pending} 
-            color="blue" 
-            icon={<Timer size={16} />} 
+          <StatCard
+            label="Pending"
+            value={stats.pending}
+            color="blue"
+            icon={<Timer size={16} />}
           />
-          <StatCard 
-            label="Dapur" 
-            value={stats.preparing} 
-            color="orange" 
-            icon={<ChefHat size={16} />} 
+          <StatCard
+            label="Dapur"
+            value={stats.preparing}
+            color="orange"
+            icon={<ChefHat size={16} />}
           />
-          <StatCard 
-            label="Siap" 
-            value={stats.ready} 
-            color="green" 
-            icon={<CheckSquare size={16} />} 
+          <StatCard
+            label="Siap"
+            value={stats.ready}
+            color="green"
+            icon={<CheckSquare size={16} />}
           />
         </div>
       </div>
-      
+
       {orders.length === 0 ? (
         /* EMPTY STATE - More Premium */
         <div className="flex flex-col items-center justify-center py-32 bg-coffee-900/20 border-2 border-dashed border-coffee-800/50 rounded-[2rem] backdrop-blur-sm print:hidden">
@@ -173,10 +171,10 @@ export default function AdminDashboard() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 print:hidden">
           {orders && orders.length > 0 && orders.map((order) => (
-            <OrderCard 
-              key={order.id} 
-              order={order} 
-              onCompleteAndPay={() => handleCompleteAndPay(order)} 
+            <OrderCard
+              key={order.id}
+              order={order}
+              onCompleteAndPay={() => handleCompleteAndPay(order)}
               onReprint={() => handleReprint(order)}
             />
           ))}
@@ -297,7 +295,7 @@ function OrderCard({ order, onCompleteAndPay, onReprint }: { order: OrderWithIte
       <div className="pt-6 border-t border-coffee-800/50 flex flex-col gap-2">
         {/* FLOW OPERASIONAL */}
         {order.status === 'pending' && (
-          <button 
+          <button
             onClick={() => updateOrderStatus(order.id, 'confirmed')}
             className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl text-sm font-bold transition-all active:scale-95 flex items-center justify-center gap-2"
           >
@@ -307,7 +305,7 @@ function OrderCard({ order, onCompleteAndPay, onReprint }: { order: OrderWithIte
         )}
 
         {order.status === 'confirmed' && (
-          <button 
+          <button
             onClick={() => updateOrderStatus(order.id, 'preparing')}
             className="w-full py-3.5 bg-orange-600 hover:bg-orange-500 text-white rounded-2xl text-sm font-bold transition-all active:scale-95 flex items-center justify-center gap-2"
           >
@@ -317,7 +315,7 @@ function OrderCard({ order, onCompleteAndPay, onReprint }: { order: OrderWithIte
         )}
 
         {order.status === 'preparing' && (
-          <button 
+          <button
             onClick={() => updateOrderStatus(order.id, 'ready')}
             className="w-full py-3.5 bg-cream-500 hover:bg-cream-400 text-coffee-950 rounded-2xl text-sm font-bold transition-all active:scale-95 flex items-center justify-center gap-2"
           >
@@ -328,7 +326,7 @@ function OrderCard({ order, onCompleteAndPay, onReprint }: { order: OrderWithIte
 
         {/* TOMBOL FINAL: BAYAR & PRINT */}
         {(order.status === 'ready' || (order.status === 'served' && order.payment_status === 'unpaid')) && (
-          <button 
+          <button
             onClick={onCompleteAndPay}
             className="w-full py-3.5 bg-green-600 hover:bg-green-500 text-white rounded-2xl text-sm font-bold transition-all active:scale-95 shadow-lg shadow-green-900/40 flex items-center justify-center gap-2"
           >
@@ -339,7 +337,7 @@ function OrderCard({ order, onCompleteAndPay, onReprint }: { order: OrderWithIte
 
         {/* RE-PRINT BUTTON (Kalau sudah lunas) */}
         {order.status === 'served' && order.payment_status === 'paid' && (
-          <button 
+          <button
             onClick={onReprint}
             className="w-full py-3.5 bg-zinc-700 hover:bg-zinc-600 text-zinc-300 rounded-xl text-sm font-bold transition-all active:scale-95 flex items-center justify-center gap-2"
           >
@@ -350,7 +348,7 @@ function OrderCard({ order, onCompleteAndPay, onReprint }: { order: OrderWithIte
 
         {/* BONUS: Tombol Cancel */}
         {(order.status === 'pending' || order.status === 'confirmed') && (
-          <button 
+          <button
             onClick={() => updateOrderStatus(order.id, 'cancelled')}
             className="w-full py-2 text-coffee-500 hover:text-red-500 text-xs transition font-bold uppercase tracking-widest flex items-center justify-center gap-1.5"
           >

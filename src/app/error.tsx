@@ -29,9 +29,9 @@ export default function Error({
         </div>
 
         <h1 className="text-4xl md:text-5xl font-display font-black text-cream-50 mb-4 tracking-tight drop-shadow-md">
-          Sistem Oleng bray! 😵‍💫
+          Sistem Oleng! 😵‍💫
         </h1>
-        
+
         <p className="text-coffee-300 max-w-md mx-auto mb-10 leading-relaxed text-lg">
           Koneksi atau sistem lagi ngadat nih. Tenang, kopinya jangan ditumpahin dulu. Coba klik tombol di bawah buat nge-reset aplikasinya.
         </p>
@@ -44,7 +44,7 @@ export default function Error({
             <RefreshCcw size={20} className="animate-spin-slow" />
             Coba Lagi
           </button>
-          
+
           <Link
             href="/"
             className="px-8 py-4 bg-coffee-900/50 hover:bg-coffee-800 text-cream-200 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all duration-300 active:scale-95 border border-coffee-700/50 hover:border-coffee-600 backdrop-blur-md"
