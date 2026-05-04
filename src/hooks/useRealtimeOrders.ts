@@ -7,7 +7,7 @@ import { OrderWithItems } from '@/lib/types/order';
 export function useRealtimeOrders() {
   const [orders, setOrders] = useState<OrderWithItems[]>([]);
   const [loading, setLoading] = useState(true);
-  const [connectionStatus, setConnectionStatus] = useState<'CONNECTING' | 'CONNECTED' | 'DISCONNECTED' | 'ERROR'>('CONNECTING');
+  const [connectionStatus, setConnectionStatus] = useState<'CONNECTING' | 'CONNECTED' | 'DISCONNECTED' | 'ERROR' | 'RECONNECTING' | 'FAILED'>('CONNECTING');
   
   const retryCount = useRef(0);
 
@@ -73,8 +73,15 @@ export function useRealtimeOrders() {
       retryCount.current = 0; // Reset retry kalau sukses
     } catch (err) {
       console.error('Fetch error:', err);
-      setConnectionStatus('ERROR');
-      setLoading(false);
+      if (retryCount.current < 3) {
+        retryCount.current += 1;
+        setConnectionStatus('RECONNECTING');
+        console.log(`Mencoba hubungkan ulang... (${retryCount.current}/3)`);
+        setTimeout(fetchOrders, 2000 * retryCount.current);
+      } else {
+        setConnectionStatus('FAILED');
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -100,8 +107,19 @@ export function useRealtimeOrders() {
       })
       .subscribe((status) => {
         console.log(`📡 Koneksi [${channelId}] status:`, status);
-        if (status === 'SUBSCRIBED') setConnectionStatus('CONNECTED');
-        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setConnectionStatus('ERROR');
+        if (status === 'SUBSCRIBED') {
+          setConnectionStatus('CONNECTED');
+          retryCount.current = 0;
+        }
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          if (retryCount.current < 3) {
+            retryCount.current += 1;
+            setConnectionStatus('RECONNECTING');
+            setTimeout(fetchOrders, 2000 * retryCount.current);
+          } else {
+            setConnectionStatus('FAILED');
+          }
+        }
       });
 
     return () => {

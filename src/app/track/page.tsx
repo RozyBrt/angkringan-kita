@@ -22,6 +22,7 @@ function TrackContent() {
     name?: string;
     time?: string;
     status?: string;
+    deleted_at?: number;
   }
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [matchingOrders, setMatchingOrders] = useState<OrderWithItems[]>([]);
@@ -42,12 +43,13 @@ function TrackContent() {
   // Load recent order IDs from localStorage
   useEffect(() => {
     async function fetchStatuses(mapped: RecentOrder[]) {
-      const ids = mapped.map(m => m.id);
-      if (ids.length === 0) return;
+      const activeIds = mapped.filter(m => !m.deleted_at).map(m => m.id);
+      if (activeIds.length === 0) return;
 
-      const { data } = await supabase.from('orders').select('id, status').in('id', ids);
+      const { data } = await supabase.from('orders').select('id, status').in('id', activeIds);
       if (data) {
         setRecentOrders(prev => prev.map(ro => {
+          if (ro.deleted_at) return ro;
           const match = data.find(d => d.id === ro.id);
           return match ? { ...ro, status: match.status } : ro;
         }));
@@ -76,8 +78,9 @@ function TrackContent() {
       title: 'Hapus Semua Riwayat?',
       message: 'Semua daftar pesanan terakhirmu akan dihapus permanen dari browser ini.',
       onConfirm: () => {
-        localStorage.removeItem('angkringan_recent_orders');
-        setRecentOrders([]);
+        const updated = recentOrders.map(ro => ({ ...ro, deleted_at: Date.now() }));
+        setRecentOrders(updated);
+        localStorage.setItem('angkringan_recent_orders', JSON.stringify(updated));
         setConfirmModal(prev => ({ ...prev, isOpen: false }));
       }
     });
@@ -90,7 +93,7 @@ function TrackContent() {
       title: 'Hapus Pesanan Ini?',
       message: 'Pesanan ini akan dihapus dari daftar riwayat terakhirmu.',
       onConfirm: () => {
-        const updated = recentOrders.filter(ro => ro.id !== id);
+        const updated = recentOrders.map(ro => ro.id === id ? { ...ro, deleted_at: Date.now() } : ro);
         setRecentOrders(updated);
         localStorage.setItem('angkringan_recent_orders', JSON.stringify(updated));
         setConfirmModal(prev => ({ ...prev, isOpen: false }));
@@ -340,7 +343,7 @@ function TrackContent() {
       </form>
 
       {/* Recent Orders */}
-      {recentOrders.length > 0 && !order && matchingOrders.length === 0 && (
+      {recentOrders.filter(ro => !ro.deleted_at).length > 0 && !order && matchingOrders.length === 0 && (
         <div className="mb-10 animate-fade-in">
           <div className="flex justify-between items-end mb-3">
             <p className="text-xs font-bold text-coffee-400 uppercase tracking-widest">Pesanan Terakhirmu</p>
@@ -352,7 +355,7 @@ function TrackContent() {
             </button>
           </div>
           <div className="flex flex-col sm:flex-row flex-wrap gap-2">
-            {recentOrders.map((ro) => {
+            {recentOrders.filter(ro => !ro.deleted_at).map((ro) => {
               const displayId = ro.order_code || ro.id.toString().split('-')[0].toUpperCase();
               const timeStr = ro.time ? new Date(ro.time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
 

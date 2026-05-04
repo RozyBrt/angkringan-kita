@@ -5,54 +5,69 @@ import { MenuItem } from '@/types';
 import { revalidatePath } from 'next/cache';
 
 export async function createMenuItem(payload: Partial<MenuItem>) {
-  const supabase = getSupabaseServer();
-  const { data, error } = await supabase
-    .from('menu_items')
-    .insert(payload)
-    .select()
-    .single();
+  try {
+    const supabase = getSupabaseServer();
+    const { data, error } = await supabase
+      .from('menu_items')
+      .insert(payload)
+      .select()
+      .single();
 
-  if (error) {
-    console.error('Gagal tambah menu:', error);
-    return { success: false, error: error.message };
+    if (error) {
+      console.error('Gagal tambah menu:', error);
+      return { success: false, error: error.message };
+    }
+
+    revalidatePath('/admin/menu');
+    return { success: true, data };
+  } catch (err) {
+    console.error('Runtime error in createMenuItem:', err);
+    return { success: false, error: err instanceof Error ? err.message : 'Terjadi kesalahan internal server' };
   }
-
-  revalidatePath('/admin/menu');
-  return { success: true, data };
 }
 
 export async function updateMenuItem(id: string | number, payload: Partial<MenuItem>) {
-  const supabase = getSupabaseServer();
-  const { data, error } = await supabase
-    .from('menu_items')
-    .update(payload)
-    .eq('id', id)
-    .select()
-    .single();
+  try {
+    const supabase = getSupabaseServer();
+    const { data, error } = await supabase
+      .from('menu_items')
+      .update(payload)
+      .eq('id', id)
+      .select()
+      .single();
 
-  if (error) {
-    console.error('Gagal update menu:', error);
-    return { success: false, error: error.message };
+    if (error) {
+      console.error('Gagal update menu:', error);
+      return { success: false, error: error.message };
+    }
+
+    revalidatePath('/admin/menu');
+    return { success: true, data };
+  } catch (err) {
+    console.error('Runtime error in updateMenuItem:', err);
+    return { success: false, error: err instanceof Error ? err.message : 'Terjadi kesalahan internal server' };
   }
-
-  revalidatePath('/admin/menu');
-  return { success: true, data };
 }
 
 export async function deleteMenuItem(id: string | number) {
-  const supabase = getSupabaseServer();
-  const { error } = await supabase
-    .from('menu_items')
-    .delete()
-    .eq('id', id);
+  try {
+    const supabase = getSupabaseServer();
+    const { error } = await supabase
+      .from('menu_items')
+      .delete()
+      .eq('id', id);
 
-  if (error) {
-    console.error('Gagal hapus menu:', error);
-    return { success: false, error: error.message };
+    if (error) {
+      console.error('Gagal hapus menu:', error);
+      return { success: false, error: error.message };
+    }
+
+    revalidatePath('/admin/menu');
+    return { success: true };
+  } catch (err) {
+    console.error('Runtime error in deleteMenuItem:', err);
+    return { success: false, error: err instanceof Error ? err.message : 'Terjadi kesalahan internal server' };
   }
-
-  revalidatePath('/admin/menu');
-  return { success: true };
 }
 
 export async function toggleMenuItemAvailability(id: string | number, currentStatus: boolean) {

@@ -100,17 +100,19 @@ export default function AdminDashboard() {
           </div>
           <div className="flex items-center gap-4">
             <h1 className="font-display text-4xl font-bold text-cream-50">Dashboard Dapur 🚀</h1>
-            <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold border ${
+            <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold border transition-colors ${
               connectionStatus === 'CONNECTED' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
               connectionStatus === 'CONNECTING' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20 animate-pulse' :
-              'bg-red-500/10 text-red-400 border-red-500/20'
+              connectionStatus === 'RECONNECTING' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20 animate-pulse' :
+              'bg-red-500/10 text-red-400 border-red-500/50 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.3)]'
             }`}>
               <div className={`w-1.5 h-1.5 rounded-full ${
                 connectionStatus === 'CONNECTED' ? 'bg-green-400' :
                 connectionStatus === 'CONNECTING' ? 'bg-blue-400' :
-                'bg-red-400'
+                connectionStatus === 'RECONNECTING' ? 'bg-orange-400' :
+                'bg-red-500'
               }`} />
-              {connectionStatus}
+              {connectionStatus === 'FAILED' ? 'OFFLINE' : connectionStatus}
             </div>
             <button 
               onClick={() => {
