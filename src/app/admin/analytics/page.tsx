@@ -10,19 +10,21 @@ export default function AnalyticsDashboard() {
   const [revenueData, setRevenueData] = useState<{ date: string; revenue: number; orders: number }[]>([]);
   const [topItems, setTopItems] = useState<{ name: string; value: number }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [days, setDays] = useState(7);
 
   useEffect(() => {
     async function loadData() {
+      setLoading(true);
       const [revRes, topRes] = await Promise.all([
-        getRevenueStats(),
-        getTopItems()
+        getRevenueStats(days),
+        getTopItems(days)
       ]);
       if (revRes.success && revRes.data) setRevenueData(revRes.data);
       if (topRes.success && topRes.data) setTopItems(topRes.data);
       setLoading(false);
     }
     loadData();
-  }, []);
+  }, [days]);
 
   const totalRevenue = revenueData.reduce((sum, item) => sum + item.revenue, 0);
   const totalOrders = revenueData.reduce((sum, item) => sum + item.orders, 0);
@@ -30,7 +32,13 @@ export default function AnalyticsDashboard() {
 
   const formatCurrency = (val: number) => `Rp ${val.toLocaleString('id-ID')}`;
 
-  if (loading) {
+  const timeRanges = [
+    { label: '7 Hari', value: 7 },
+    { label: '30 Hari', value: 30 },
+    { label: '90 Hari', value: 90 },
+  ];
+
+  if (loading && revenueData.length === 0) {
     return (
       <div className="min-h-screen bg-coffee-950 flex flex-col items-center justify-center">
         <Loader2 className="animate-spin text-cream-500 mb-4" size={48} />
@@ -46,13 +54,30 @@ export default function AnalyticsDashboard() {
       <div className="absolute bottom-[-10%] right-[-10%] w-[30rem] h-[30rem] bg-blue-900/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Header */}
-      <div className="max-w-6xl mx-auto mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+      <div className="max-w-6xl mx-auto mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
         <div>
           <h1 className="text-3xl md:text-4xl font-display font-black text-transparent bg-clip-text bg-gradient-to-r from-cream-100 to-orange-200 flex items-center gap-3">
             <TrendingUp className="text-orange-400 flex-shrink-0" /> Business Intelligence
           </h1>
-          <p className="text-coffee-400 mt-2 font-medium">Ringkasan performa penjualan 7 hari terakhir.</p>
+          <p className="text-coffee-400 mt-2 font-medium">Ringkasan performa penjualan {days} hari terakhir.</p>
         </div>
+        
+        <div className="flex items-center gap-3 bg-coffee-900/60 p-1.5 rounded-2xl border border-coffee-800/50 backdrop-blur-md">
+          {timeRanges.map((range) => (
+            <button
+              key={range.value}
+              onClick={() => setDays(range.value)}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                days === range.value 
+                  ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' 
+                  : 'text-coffee-400 hover:text-cream-200 hover:bg-coffee-800/50'
+              }`}
+            >
+              {range.label}
+            </button>
+          ))}
+        </div>
+
         <Link href="/admin/dashboard" className="px-5 py-2.5 bg-coffee-900/60 hover:bg-coffee-800 text-cream-200 rounded-xl font-bold flex items-center gap-2 transition-all border border-coffee-700/50 backdrop-blur-md shadow-lg w-fit">
           <ArrowLeft size={18} /> Kembali ke Dapur
         </Link>
@@ -98,10 +123,15 @@ export default function AnalyticsDashboard() {
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* Revenue Line Chart */}
-          <div className="lg:col-span-3 bg-coffee-900/40 backdrop-blur-xl border border-coffee-800/60 p-8 rounded-[2rem] shadow-2xl">
+          <div className="lg:col-span-3 bg-coffee-900/40 backdrop-blur-xl border border-coffee-800/60 p-8 rounded-[2rem] shadow-2xl relative">
+            {loading && (
+              <div className="absolute inset-0 bg-coffee-900/20 backdrop-blur-[2px] z-20 flex items-center justify-center rounded-[2rem]">
+                <Loader2 className="animate-spin text-orange-400" size={32} />
+              </div>
+            )}
             <h3 className="text-xl font-display font-bold mb-8 text-cream-100 flex items-center gap-2">
               <div className="w-2 h-6 bg-orange-400 rounded-full" />
-              Tren Pendapatan 7 Hari
+              Tren Pendapatan {days} Hari
             </h3>
             <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -117,11 +147,21 @@ export default function AnalyticsDashboard() {
                     dataKey="revenue" 
                     stroke="#fbd38d" 
                     strokeWidth={4} 
-                    dot={{ r: 6, fill: '#1a1412', strokeWidth: 2, stroke: '#fbd38d' }} 
+                    dot={days <= 31 ? { r: 6, fill: '#1a1412', strokeWidth: 2, stroke: '#fbd38d' } : false} 
                     activeDot={{ r: 8, fill: '#f6ad55', stroke: '#fff', strokeWidth: 2 }} 
+                    animationDuration={1000}
                   />
                   <CartesianGrid stroke="#3d2b24" strokeDasharray="5 5" vertical={false} />
-                  <XAxis dataKey="date" stroke="#8b7366" tickLine={false} axisLine={false} dy={10} fontSize={12} fontWeight={500} />
+                  <XAxis 
+                    dataKey="date" 
+                    stroke="#8b7366" 
+                    tickLine={false} 
+                    axisLine={false} 
+                    dy={10} 
+                    fontSize={10} 
+                    fontWeight={500}
+                    interval={days > 30 ? 6 : days > 7 ? 2 : 0}
+                  />
                   <YAxis 
                     stroke="#8b7366" 
                     tickLine={false} 
@@ -143,7 +183,12 @@ export default function AnalyticsDashboard() {
           </div>
 
           {/* Top Items Bar Chart */}
-          <div className="lg:col-span-2 bg-coffee-900/40 backdrop-blur-xl border border-coffee-800/60 p-8 rounded-[2rem] shadow-2xl">
+          <div className="lg:col-span-2 bg-coffee-900/40 backdrop-blur-xl border border-coffee-800/60 p-8 rounded-[2rem] shadow-2xl relative">
+            {loading && (
+              <div className="absolute inset-0 bg-coffee-900/20 backdrop-blur-[2px] z-20 flex items-center justify-center rounded-[2rem]">
+                <Loader2 className="animate-spin text-blue-400" size={32} />
+              </div>
+            )}
             <h3 className="text-xl font-display font-bold mb-8 text-cream-100 flex items-center gap-2">
               <div className="w-2 h-6 bg-blue-400 rounded-full" />
               Top 5 Menu Terlaris
@@ -161,7 +206,7 @@ export default function AnalyticsDashboard() {
                     labelStyle={{ display: 'none' }}
                     formatter={(value, name, props) => [ `${Number(value) || 0} porsi`, (props as { payload: { name: string } }).payload.name ]}
                   />
-                  <Bar dataKey="value" fill="#ed8936" radius={[0, 8, 8, 0]} barSize={32}>
+                  <Bar dataKey="value" fill="#ed8936" radius={[0, 8, 8, 0]} barSize={32} animationDuration={1000}>
                     {topItems.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={['#ed8936', '#f6ad55', '#fbd38d', '#f6e05e', '#faf089'][index % 5]} />
                     ))}

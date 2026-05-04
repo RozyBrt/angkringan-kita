@@ -271,16 +271,16 @@ function OrderCard({ order, onCompleteAndPay, onReprint }: { order: OrderWithIte
         </div>
       </div>
 
-      <div className="space-y-3 mb-8 flex-grow">
+      <div className="space-y-3 mb-8 flex-grow max-h-[320px] overflow-y-auto pr-2 custom-scrollbar">
         {order.order_items?.map((item, idx: number) => (
           <div key={idx} className="flex justify-between items-center bg-coffee-950/30 p-3 rounded-xl border border-coffee-800/30 group-hover:border-coffee-700/50 transition-colors">
             <div className="flex flex-col">
-              <span className="text-cream-200 font-medium text-sm">
+              <span className="text-cream-200 font-medium text-sm leading-tight">
                 {item.menu_items?.name || `Item #${item.menu_item_id.toString().slice(0, 4)}`}
               </span>
-              <span className="text-[10px] text-coffee-500 uppercase font-bold tracking-wider">Jumlah: {item.quantity}x</span>
+              <span className="text-[10px] text-coffee-500 uppercase font-bold tracking-wider mt-1">Jumlah: {item.quantity}x</span>
             </div>
-            <span className="text-cream-400 font-mono text-sm font-bold bg-coffee-950/50 px-2 py-1 rounded-lg">
+            <span className="text-cream-400 font-mono text-sm font-bold bg-coffee-950/50 px-2 py-1 rounded-lg ml-4">
               {(item.subtotal || 0).toLocaleString('id-ID')}
             </span>
           </div>

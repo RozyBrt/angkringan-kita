@@ -128,3 +128,19 @@
   background-size: 1000px 100%;
   animation: shimmer 1.5s infinite linear;
 }
+
+/* Admin Specific Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(45, 30, 24, 0.2);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(139, 115, 102, 0.3);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 115, 102, 0.5);
+}
