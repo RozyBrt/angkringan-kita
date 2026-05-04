@@ -18,8 +18,10 @@ import {
   CheckSquare,
   Banknote,
   Printer,
-  Volume2
+  Volume2,
+  TrendingUp
 } from 'lucide-react';
+import Link from 'next/link';
 
 export default function AdminDashboard() {
   const { orders, connectionStatus, playNotification } = useRealtimeOrders();
@@ -100,6 +102,13 @@ export default function AdminDashboard() {
           </div>
           <div className="flex items-center gap-4">
             <h1 className="font-display text-4xl font-bold text-cream-50">Dashboard Dapur 🚀</h1>
+            <Link 
+              href="/admin/analytics" 
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500/20 to-orange-600/20 hover:from-orange-500/30 hover:to-orange-600/30 border border-orange-500/30 text-orange-300 rounded-xl font-bold transition-all active:scale-95 shadow-[0_0_15px_rgba(237,137,54,0.15)] ml-2"
+            >
+              <TrendingUp size={16} className="text-orange-400" />
+              <span className="text-sm">Analitik Cuan</span>
+            </Link>
             <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold border transition-colors ${
               connectionStatus === 'CONNECTED' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
               connectionStatus === 'CONNECTING' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20 animate-pulse' :
