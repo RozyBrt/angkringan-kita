@@ -8,41 +8,52 @@ export async function updateOrderStatus(orderId: string | number, newStatus: Ord
   try {
     const supabase = getSupabaseServer();
 
-    // Auto-Decrement Logic: Kalau status berubah ke confirmed, kurangi stok
-    if (newStatus === 'confirmed') {
-      const { data: orderItems, error: itemsError } = await supabase
-        .from('order_items')
-        .select('menu_item_id, quantity')
-        .eq('order_id', orderId);
+    // LOGIKA BALIKIN STOK (Kalau Cancelled)
+    if (newStatus === 'cancelled') {
+      // 1. Cek dulu status sebelumnya, jangan sampai stok balik dua kali
+      const { data: currentOrder, error: orderError } = await supabase
+        .from('orders')
+        .select('status')
+        .eq('id', orderId)
+        .single();
+      
+      if (orderError) throw orderError;
 
-      if (itemsError) throw itemsError;
+      // Cuma balikin stok kalau status sebelumnya BUKAN cancelled
+      if (currentOrder.status !== 'cancelled') {
+        const { data: orderItems, error: itemsError } = await supabase
+          .from('order_items')
+          .select('menu_item_id, quantity')
+          .eq('order_id', orderId);
 
-      for (const item of orderItems) {
-        const { data: menuData, error: menuError } = await supabase
-          .from('menu_items')
-          .select('stock_quantity, is_track_stock')
-          .eq('id', item.menu_item_id)
-          .single();
+        if (itemsError) throw itemsError;
 
-        if (menuError) throw menuError;
-
-        if (menuData.is_track_stock && menuData.stock_quantity !== null) {
-          const newStock = Math.max(0, menuData.stock_quantity - item.quantity);
-          const isAvailable = newStock > 0;
-
-          const { error: updateError } = await supabase
+        for (const item of orderItems) {
+          const { data: menuData, error: menuError } = await supabase
             .from('menu_items')
-            .update({ 
-              stock_quantity: newStock,
-              is_available: isAvailable
-            })
-            .eq('id', item.menu_item_id);
+            .select('stock_quantity, is_track_stock')
+            .eq('id', item.menu_item_id)
+            .single();
 
-          if (updateError) throw updateError;
+          if (menuError) throw menuError;
+
+          if (menuData.is_track_stock && menuData.stock_quantity !== null) {
+            const newStock = menuData.stock_quantity + item.quantity;
+            // Kalau stok balik lagi > 0, otomatis jadi tersedia lagi
+            const isAvailable = newStock > 0;
+
+            await supabase
+              .from('menu_items')
+              .update({ 
+                stock_quantity: newStock,
+                is_available: isAvailable
+              })
+              .eq('id', item.menu_item_id);
+          }
         }
       }
     }
-
+    
     const { error } = await supabase
       .from('orders')
       .update({ status: newStatus })
@@ -85,7 +96,10 @@ export async function checkoutOrder(payload: {
       }
     }
 
-    // 2. Validasi Stock
+    // 2. Validasi & Potong Stock
+    const errors: string[] = [];
+    const itemsToUpdate: { id: string | number; newStock: number; isAvailable: boolean }[] = [];
+
     for (const item of payload.items) {
       const { data: menuData, error: menuError } = await supabase
         .from('menu_items')
@@ -95,15 +109,49 @@ export async function checkoutOrder(payload: {
 
       if (menuError || !menuData) continue;
 
-      if (!menuData.is_available) {
-         return { success: false, error: `Maaf, ${menuData.name} lagi kosong nih!` };
+      // Cek apakah menu beneran tersedia (pake logika yang sama kayak MenuCard)
+      const isEffectivelyAvailable = menuData.is_available && (!menuData.is_track_stock || (menuData.stock_quantity ?? 0) > 0);
+
+      if (!isEffectivelyAvailable) {
+        errors.push(`${menuData.name} sudah habis`);
+        continue;
       }
 
       if (menuData.is_track_stock && menuData.stock_quantity !== null) {
         if (menuData.stock_quantity < item.quantity) {
-          return { success: false, error: `Stok ${menuData.name} nggak cukup! Sisa: ${menuData.stock_quantity} porsi.` };
+          errors.push(`Stok ${menuData.name} tidak cukup (Sisa: ${menuData.stock_quantity})`);
+          continue;
         }
+
+        // Kalau aman, kita simpan dulu rencana updatenya
+        const newStock = menuData.stock_quantity - item.quantity;
+        itemsToUpdate.push({
+          id: item.menu_item_id,
+          newStock,
+          isAvailable: newStock > 0
+        });
       }
+    }
+
+    // Kalau ada error, kita kasih tau semuanya sekaligus bray!
+    if (errors.length > 0) {
+      return { 
+        success: false, 
+        error: `Waduh bray, ada masalah sama pesananmu: ${errors.join(', ')}. Tolong sesuaikan keranjangmu ya!` 
+      };
+    }
+
+    // 2.5 Eksekusi Potong Stok (Kalau semua item aman)
+    for (const update of itemsToUpdate) {
+      const { error: updateError } = await supabase
+        .from('menu_items')
+        .update({ 
+          stock_quantity: update.newStock,
+          is_available: update.isAvailable
+        })
+        .eq('id', update.id);
+      
+      if (updateError) throw updateError;
     }
 
     // 3. Create Order

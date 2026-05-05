@@ -39,7 +39,32 @@ export default function MenuPage() {
         setLoading(false);
       }
     }
+
     fetchMenu();
+
+    // REAL-TIME: Dengerin perubahan di tabel menu_items
+    const channel = supabase
+      .channel('realtime_menu')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'menu_items' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setMenuItems((prev) => [...prev, payload.new as MenuItem].sort((a, b) => a.name.localeCompare(b.name)));
+          } else if (payload.eventType === 'UPDATE') {
+            setMenuItems((prev) => 
+              prev.map((item) => (item.id === payload.new.id ? (payload.new as MenuItem) : item))
+            );
+          } else if (payload.eventType === 'DELETE') {
+            setMenuItems((prev) => prev.filter((item) => item.id === payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const filtered = menuItems.filter((item) => {

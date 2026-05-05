@@ -65,7 +65,33 @@ export default function AdminMenuPage() {
   }, []);
 
   useEffect(() => {
-    if (session) fetchMenu();
+    if (session) {
+      fetchMenu();
+
+      // REAL-TIME: Update data secara halus tanpa kedip (Optimistic Update)
+      const channel = supabase
+        .channel('admin_menu_realtime')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'menu_items' },
+          (payload) => {
+            if (payload.eventType === 'INSERT') {
+              setMenuItems((prev) => [...prev, payload.new as MenuItem].sort((a, b) => a.name.localeCompare(b.name)));
+            } else if (payload.eventType === 'UPDATE') {
+              setMenuItems((prev) => 
+                prev.map((item) => (item.id === payload.new.id ? (payload.new as MenuItem) : item))
+              );
+            } else if (payload.eventType === 'DELETE') {
+              setMenuItems((prev) => prev.filter((item) => item.id === payload.old.id));
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
   }, [session, fetchMenu]);
 
   function resetForm() {
@@ -368,7 +394,7 @@ export default function AdminMenuPage() {
       )}
 
       {/* Menu List */}
-      {loading ? (
+      {loading && menuItems.length === 0 ? (
         <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="skeleton h-20 rounded-2xl" />

@@ -61,10 +61,32 @@ function TrackContent() {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
-          // Backward compatibility for old string array
           const mapped = parsed.map(p => typeof p === 'string' ? { id: p } : p);
           setRecentOrders(mapped);
           fetchStatuses(mapped);
+
+          // REAL-TIME: Dengerin perubahan status buat SEMUA riwayat pesanan bray
+          const activeIds = mapped.filter(m => !m.deleted_at).map(m => m.id);
+          if (activeIds.length > 0) {
+            const channel = supabase
+              .channel('recent_orders_sync')
+              .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'orders' },
+                (payload) => {
+                  if (activeIds.includes(payload.new.id)) {
+                    setRecentOrders(prev => prev.map(ro => 
+                      ro.id === payload.new.id ? { ...ro, status: payload.new.status } : ro
+                    ));
+                  }
+                }
+              )
+              .subscribe();
+            
+            return () => {
+              supabase.removeChannel(channel);
+            };
+          }
         }
       }
     } catch {

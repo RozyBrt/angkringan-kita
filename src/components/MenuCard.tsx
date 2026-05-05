@@ -19,8 +19,11 @@ export default function MenuCard({ item }: MenuCardProps) {
   const cartItem = cart.items.find((i) => i.menuItem.id === item.id);
   const quantity = cartItem?.quantity ?? 0;
 
+  // LOGIKA PINTAR: Menu beneran tersedia kalau statusnya AKTIF DAN (Gak dilacak stoknya ATAU stoknya > 0)
+  const effectivelyAvailable = item.is_available && (!item.is_track_stock || (item.stock_quantity ?? 0) > 0);
+
   const handleAdd = () => {
-    if (!item.is_available) return;
+    if (!effectivelyAvailable) return;
     addItem(item);
     setAdded(true);
     setTimeout(() => setAdded(false), 800);
@@ -29,7 +32,7 @@ export default function MenuCard({ item }: MenuCardProps) {
   return (
     <article
       className={`card overflow-hidden flex flex-col group transition-all duration-300 ${
-        !item.is_available ? 'opacity-60' : 'hover:-translate-y-1'
+        !effectivelyAvailable ? 'opacity-60' : 'hover:-translate-y-1'
       }`}
     >
       {/* Image */}
@@ -57,7 +60,7 @@ export default function MenuCard({ item }: MenuCardProps) {
         </span>
 
         {/* Unavailable overlay */}
-        {!item.is_available && (
+        {!effectivelyAvailable && (
           <div className="absolute inset-0 bg-coffee-900/50 flex items-center justify-center">
             <span className="bg-white/90 text-coffee-800 text-xs font-semibold px-3 py-1 rounded-full">
               Habis
@@ -89,14 +92,14 @@ export default function MenuCard({ item }: MenuCardProps) {
           <button
             id={`add-to-cart-${item.id}`}
             onClick={handleAdd}
-            disabled={!item.is_available}
+            disabled={!effectivelyAvailable}
             aria-label={`Tambah ${item.name} ke keranjang`}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold 
                         transition-all duration-200 active:scale-90
                         ${
                           added
                             ? 'bg-green-500 text-white scale-105'
-                            : item.is_available
+                            : effectivelyAvailable
                             ? 'bg-coffee-700 text-cream-50 hover:bg-coffee-800 shadow-sm hover:shadow'
                             : 'bg-cream-200 text-coffee-300 cursor-not-allowed'
                         }`}
