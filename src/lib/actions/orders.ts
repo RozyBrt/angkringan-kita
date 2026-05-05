@@ -168,7 +168,19 @@ export async function checkoutOrder(payload: {
       .select()
       .single();
 
-    if (orderError) throw orderError;
+    if (orderError) {
+      // REM DARURAT: Balikin stok kalau gagal bikin pesanan utama
+      for (const update of itemsToUpdate) {
+        const { data: menu } = await supabase.from('menu_items').select('stock_quantity').eq('id', update.id).single();
+        if (menu) {
+          await supabase.from('menu_items').update({ 
+            stock_quantity: menu.stock_quantity + (payload.items.find(i => i.menu_item_id === update.id)?.quantity || 0),
+            is_available: true
+          }).eq('id', update.id);
+        }
+      }
+      throw orderError;
+    }
 
     // 4. Create Order Items
     const orderItems = payload.items.map((item) => ({
@@ -183,7 +195,21 @@ export async function checkoutOrder(payload: {
       .from('order_items')
       .insert(orderItems);
 
-    if (itemsError) throw itemsError;
+    if (itemsError) {
+      // REM DARURAT: Balikin stok kalau gagal bikin detail item
+      for (const update of itemsToUpdate) {
+        const { data: menu } = await supabase.from('menu_items').select('stock_quantity').eq('id', update.id).single();
+        if (menu) {
+          await supabase.from('menu_items').update({ 
+            stock_quantity: menu.stock_quantity + (payload.items.find(i => i.menu_item_id === update.id)?.quantity || 0),
+            is_available: true
+          }).eq('id', update.id);
+        }
+      }
+      // Hapus juga order utama yang tadi udah telanjur masuk
+      await supabase.from('orders').delete().eq('id', order.id);
+      throw itemsError;
+    }
 
     return { success: true, orderId: order.id, orderCode: order.order_code };
 
