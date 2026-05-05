@@ -8,6 +8,8 @@ export interface MenuItem {
   price: number;
   image_url: string | null;
   is_available: boolean;
+  stock_quantity: number | null;
+  is_track_stock: boolean;
 }
 
 export interface Order {

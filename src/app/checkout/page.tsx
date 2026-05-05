@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useCart } from '@/hooks/useCart';
 import { formatPrice } from '@/lib/cart';
-import { supabase } from '@/lib/supabase';
+import { checkoutOrder } from '@/lib/actions/orders';
 import { ArrowLeft, Send, User, Hash, MessageSquare } from 'lucide-react';
 
 export default function CheckoutPage() {
@@ -23,14 +23,14 @@ export default function CheckoutPage() {
   if (cart.items.length === 0 && !loading && !isDone) {
     return (
       <div className="max-w-xl mx-auto px-4 py-16 text-center animate-fade-in">
-        <p className="text-5xl mb-4">🛒</p>
-        <h1 className="font-display text-2xl font-bold text-coffee-900 mb-3">
-          Keranjang Kosong
-        </h1>
-        <p className="text-coffee-500 mb-6">Tambahin menu dulu sebelum checkout ya!</p>
+        <div className="w-24 h-24 bg-coffee-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <MessageSquare size={32} className="text-coffee-400" />
+        </div>
+        <h2 className="text-2xl font-display font-semibold text-coffee-900 mb-2">Keranjang Kosong</h2>
+        <p className="text-coffee-600 mb-8">Pilih menu dulu bray, masa mau bayar angin.</p>
         <Link href="/" className="btn-primary inline-flex items-center gap-2">
-          <ArrowLeft size={16} />
-          Lihat Menu
+          <ArrowLeft size={18} />
+          Balik ke Menu
         </Link>
       </div>
     );
@@ -38,14 +38,16 @@ export default function CheckoutPage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!customerName.trim()) return;
+    if (!customerName.trim()) {
+      setError('Nama pemesan harus diisi ya bray!');
+      return;
+    }
 
     setLoading(true);
     setError(null);
 
-    const cleanTableNumber = tableNumber.trim();
-
     try {
+      const cleanTableNumber = tableNumber.trim();
       const noteText = [
         cleanTableNumber ? `Meja: ${cleanTableNumber}` : '',
         note,
@@ -53,50 +55,26 @@ export default function CheckoutPage() {
         .filter(Boolean)
         .join(' | ');
 
-      // 1. Validasi: Cek apakah meja sedang digunakan oleh pesanan aktif lain
-      if (cleanTableNumber) {
-        const { data: existingOrder } = await supabase
-          .from('orders')
-          .select('id')
-          .eq('table_number', cleanTableNumber)
-          .not('status', 'in', '("served","cancelled")') // Mencari yang belum selesai
-          .maybeSingle();
-
-        if (existingOrder) {
-          setError(`Waduh bray, Meja ${cleanTableNumber} masih ada pesanan aktif. Silakan tunggu atau pilih meja lain ya!`);
-          setLoading(false);
-          return;
-        }
-      }
-
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          customer_name: customerName.trim(),
-          table_number: cleanTableNumber || null,
-          note: noteText || null,
-          total_price: total,
-          total_amount: total,
-          status: 'pending',
-        })
-        .select()
-        .single();
-
-      if (orderError) throw orderError;
-
-      const orderItems = cart.items.map((item) => ({
-        order_id: order.id,
+      const items = cart.items.map((item) => ({
         menu_item_id: item.menuItem.id,
         quantity: item.quantity,
         price: item.menuItem.price,
         subtotal: item.menuItem.price * item.quantity,
       }));
 
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
+      const res = await checkoutOrder({
+        customerName: customerName.trim(),
+        tableNumber: cleanTableNumber || null,
+        note: noteText || null,
+        total,
+        items
+      });
 
-      if (itemsError) throw itemsError;
+      if (!res.success) {
+        setError(res.error || 'Terjadi kesalahan saat memproses pesanan.');
+        setLoading(false);
+        return;
+      }
 
       // Tandai sebagai selesai agar UI tidak berubah saat keranjang dikosongkan
       setIsDone(true);
@@ -111,16 +89,16 @@ export default function CheckoutPage() {
         }
 
         recent.unshift({
-          id: order.id,
-          order_code: order.order_code,
-          name: order.customer_name,
+          id: res.orderId,
+          order_code: res.orderCode,
+          name: customerName.trim(),
           time: new Date().toISOString()
         });
 
         localStorage.setItem('angkringan_recent_orders', JSON.stringify(recent.slice(0, 5)));
       } catch { /* ignore */ }
 
-      router.push(`/order-success?id=${order.id}`);
+      router.push(`/order-success?id=${res.orderId}`);
 
       // Kosongkan keranjang di background
       setTimeout(() => {

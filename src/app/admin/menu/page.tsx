@@ -37,6 +37,8 @@ export default function AdminMenuPage() {
   const [formPrice, setFormPrice] = useState('');
   const [formImageUrl, setFormImageUrl] = useState('');
   const [formAvailable, setFormAvailable] = useState(true);
+  const [formStockQuantity, setFormStockQuantity] = useState('');
+  const [formIsTrackStock, setFormIsTrackStock] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -73,6 +75,8 @@ export default function AdminMenuPage() {
     setFormPrice('');
     setFormImageUrl('');
     setFormAvailable(true);
+    setFormStockQuantity('');
+    setFormIsTrackStock(false);
     setFormError(null);
     setEditingItem(null);
   }
@@ -90,6 +94,8 @@ export default function AdminMenuPage() {
     setFormPrice(String(item.price));
     setFormImageUrl(item.image_url || '');
     setFormAvailable(item.is_available);
+    setFormStockQuantity(item.stock_quantity?.toString() || '');
+    setFormIsTrackStock(item.is_track_stock || false);
     setFormError(null);
     setShowForm(true);
   }
@@ -115,6 +121,8 @@ export default function AdminMenuPage() {
       price: parseInt(formPrice, 10),
       image_url: formImageUrl.trim() || null,
       is_available: formAvailable,
+      is_track_stock: formIsTrackStock,
+      stock_quantity: formIsTrackStock ? parseInt(formStockQuantity, 10) || 0 : null,
     };
 
     if (editingItem) {
@@ -285,7 +293,7 @@ export default function AdminMenuPage() {
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-coffee-300">Tersedia?</span>
+                <span className="text-sm font-medium text-coffee-300">Tersedia di Menu?</span>
                 <button
                   type="button"
                   onClick={() => setFormAvailable(!formAvailable)}
@@ -299,6 +307,38 @@ export default function AdminMenuPage() {
                   {formAvailable ? 'Ya' : 'Habis'}
                 </button>
               </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-coffee-800/50">
+                <span className="text-sm font-medium text-coffee-300">Lacak Stok Otomatis?</span>
+                <button
+                  type="button"
+                  onClick={() => setFormIsTrackStock(!formIsTrackStock)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                    formIsTrackStock
+                      ? 'bg-blue-900/40 text-blue-400 border border-blue-800/50'
+                      : 'bg-coffee-900/40 text-coffee-500 border border-coffee-800/50'
+                  }`}
+                >
+                  {formIsTrackStock ? <ToggleRight size={18} /> : <ToggleLeft size={18} />}
+                  {formIsTrackStock ? 'Ya' : 'Tidak'}
+                </button>
+              </div>
+
+              {formIsTrackStock && (
+                <div className="animate-fade-in">
+                  <label className="block text-sm font-medium text-coffee-300 mb-1">Jumlah Stok Saat Ini</label>
+                  <input
+                    type="number"
+                    value={formStockQuantity}
+                    onChange={(e) => setFormStockQuantity(e.target.value)}
+                    placeholder="Contoh: 50"
+                    min="0"
+                    className="w-full px-4 py-3 rounded-xl bg-coffee-800 border border-coffee-700
+                               text-cream-100 placeholder-coffee-500 focus:outline-none 
+                               focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
+                  />
+                </div>
+              )}
 
               {formError && (
                 <div className="bg-red-900/40 border border-red-800/60 text-red-300 rounded-xl px-4 py-3 text-sm">
@@ -373,13 +413,32 @@ export default function AdminMenuPage() {
 
                       {/* Info */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 mb-0.5">
                           <p className="font-semibold text-cream-100 text-sm truncate">{item.name}</p>
                           {!item.is_available && (
-                            <span className="text-xs px-1.5 py-0.5 bg-red-900/50 text-red-400 rounded-full">Habis</span>
+                            <span className="text-[10px] px-1.5 py-0.5 bg-red-900/50 text-red-400 rounded-full font-bold uppercase tracking-wider">Habis</span>
+                          )}
+                          {item.is_available && item.is_track_stock && item.stock_quantity !== null && item.stock_quantity < 5 && (
+                            <span className="text-[10px] px-1.5 py-0.5 bg-orange-900/50 text-orange-400 rounded-full font-bold">Stok Menipis</span>
                           )}
                         </div>
-                        <p className="text-coffee-400 text-xs">{formatPrice(item.price)}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-coffee-400 text-xs font-mono">{formatPrice(item.price)}</p>
+                          {item.is_track_stock && item.stock_quantity !== null && (
+                            <>
+                              <span className="text-coffee-600 text-[10px]">•</span>
+                              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
+                                item.stock_quantity === 0 
+                                  ? 'bg-red-950/50 text-red-500' 
+                                  : item.stock_quantity < 5 
+                                    ? 'bg-orange-950/50 text-orange-500' 
+                                    : 'bg-coffee-900/80 text-coffee-400'
+                              }`}>
+                                Sisa: {item.stock_quantity}
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </div>
 
                       {/* Actions */}
