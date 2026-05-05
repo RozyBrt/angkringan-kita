@@ -42,6 +42,11 @@ export default function AdminMenuPage() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
+  // Custom Modal States
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<MenuItem | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
@@ -174,16 +179,32 @@ export default function AdminMenuPage() {
     setSaving(false);
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm('Yakin mau hapus menu ini bray?')) return;
-    setDeleting(id);
-    const res = await deleteMenuItem(id);
+  function openDeleteConfirm(item: MenuItem) {
+    setItemToDelete(item);
+    setDeleteError(null);
+    setShowDeleteModal(true);
+  }
+
+  async function handleDelete() {
+    if (!itemToDelete) return;
+    
+    setDeleting(itemToDelete.id);
+    setDeleteError(null);
+    
+    const res = await deleteMenuItem(itemToDelete.id);
     if (!res.success) {
-      alert('Gagal hapus bray: ' + res.error);
+      if (res.error?.includes('violates foreign key constraint')) {
+        setDeleteError('Menu ini nggak bisa dihapus karena sudah pernah dipesan bray. Buat sejarah transaksi lu tetap aman, mending lu matikan aja ketersediaannya daripada dihapus.');
+      } else {
+        setDeleteError(res.error || 'Gagal hapus menu bray.');
+      }
+      setDeleting(null);
     } else {
       await fetchMenu();
+      setDeleting(null);
+      setShowDeleteModal(false);
+      setItemToDelete(null);
     }
-    setDeleting(null);
   }
 
   async function toggleAvailability(item: MenuItem) {
@@ -487,8 +508,8 @@ export default function AdminMenuPage() {
                         >
                           <Pencil size={15} />
                         </button>
-                        <button
-                          onClick={() => handleDelete(item.id)}
+                         <button
+                          onClick={() => openDeleteConfirm(item)}
                           disabled={deleting === item.id}
                           className="p-2 rounded-lg text-coffee-400 hover:text-red-400 hover:bg-red-900/30 transition-colors
                                      disabled:opacity-50"
@@ -507,6 +528,62 @@ export default function AdminMenuPage() {
               </div>
             );
           })}
+        </div>
+      )}
+      {/* CUSTOM DELETE CONFIRM MODAL */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
+          <div className="bg-coffee-900 rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-coffee-700 animate-slide-up">
+            <div className="w-16 h-16 bg-red-900/30 rounded-2xl flex items-center justify-center mb-6 mx-auto">
+              <Trash2 size={32} className="text-red-500" />
+            </div>
+            <h3 className="text-xl font-display font-bold text-cream-100 text-center mb-2">
+              Hapus Menu Ini Bray?
+            </h3>
+            <p className="text-coffee-400 text-center text-sm mb-6 leading-relaxed">
+              Yakin mau hapus <span className="text-cream-50 font-bold">{itemToDelete?.name}</span>? Tindakan ini nggak bisa dibatalkan bray.
+            </p>
+
+            {deleteError && (
+              <div className="bg-red-900/40 border border-red-800/50 text-red-300 rounded-xl px-4 py-3 text-xs mb-6 leading-relaxed">
+                {deleteError}
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setItemToDelete(null);
+                  setDeleteError(null);
+                }}
+                disabled={!!deleting}
+                className="flex-1 py-3 px-4 bg-coffee-800 hover:bg-coffee-700 text-coffee-300 rounded-xl font-bold transition-all active:scale-95 disabled:opacity-50"
+              >
+                Batal
+              </button>
+              {!deleteError ? (
+                <button
+                  onClick={handleDelete}
+                  disabled={!!deleting}
+                  className="flex-1 py-3 px-4 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition-all active:scale-95 shadow-lg shadow-red-900/20 disabled:opacity-50"
+                >
+                  {deleting ? 'Menghapus...' : 'Ya, Hapus'}
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setItemToDelete(null);
+                    setDeleteError(null);
+                  }}
+                  className="flex-1 py-3 px-4 bg-coffee-100 text-coffee-900 rounded-xl font-bold transition-all active:scale-95 shadow-lg shadow-cream-900/20"
+                >
+                  Paham bray
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
