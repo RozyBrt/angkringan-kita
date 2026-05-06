@@ -75,7 +75,7 @@ function OrderSuccessContent() {
   const promoCode = orderAny.promo_code_used || null;
   const originalTotal = orderAny.total_price || orderAny.total_amount || 0;
   const finalTotal = orderAny.total_amount || originalTotal;
-  const earnedPoints = orderAny.points_earned || pointsFromParam;
+  const earnedPoints = (orderAny.points_earned > 0 ? orderAny.points_earned : null) ?? pointsFromParam;
 
   return (
     <div className="max-w-md mx-auto px-4 py-10 text-center animate-slide-up">
