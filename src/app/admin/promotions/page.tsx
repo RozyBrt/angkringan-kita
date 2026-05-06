@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
+import { Session } from '@supabase/supabase-js';
 import AdminLogin from '@/components/AdminLogin';
 import { 
   Plus, Pencil, Trash2, X, Save, Tag, Calendar, 
@@ -26,7 +27,7 @@ interface Promotion {
 export default function AdminPromotions() {
   const [promos, setPromos] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(true);
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
 
   // Form state
