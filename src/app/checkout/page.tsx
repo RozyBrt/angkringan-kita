@@ -1,23 +1,21 @@
 'use client';
 
-import { useState, FormEvent, useEffect, useRef, Suspense } from 'react';
+import { useState, FormEvent, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useCart } from '@/hooks/useCart';
 import { formatPrice } from '@/lib/cart';
 import { checkoutOrder } from '@/lib/actions/orders';
-import { ArrowLeft, Send, User, Hash, MessageSquare, QrCode, Clock, CheckCheck, Tag, Star } from 'lucide-react';
+import { ArrowLeft, Send, User, Hash, MessageSquare, QrCode, CheckCheck, Tag, Star } from 'lucide-react';
 
 // QRIS Modal Component
 function QRISModal({
-  orderId,
   orderCode,
   totalAmount,
   pointsEarned,
   customerName,
   onConfirmPayment,
 }: {
-  orderId: string;
   orderCode: string;
   totalAmount: number;
   pointsEarned: number;
@@ -288,7 +286,6 @@ function CheckoutContent() {
       {/* QRIS Payment Modal */}
       {showQRIS && orderResult && (
         <QRISModal
-          orderId={orderResult.orderId}
           orderCode={orderResult.orderCode}
           totalAmount={effectiveFinal}
           pointsEarned={orderResult.pointsEarned}

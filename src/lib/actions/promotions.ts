@@ -82,7 +82,16 @@ export async function validatePromoCode(
   }
 }
 
-export async function createPromotion(payload: any) {
+export async function createPromotion(payload: {
+  code: string;
+  description: string;
+  discount_type: 'fixed' | 'percentage';
+  value: number;
+  min_order_amount: number;
+  valid_until: string | null;
+  usage_limit: number | null;
+  is_active: boolean;
+}) {
   try {
     const supabase = getSupabaseServer();
     const { data, error } = await supabase
@@ -99,7 +108,16 @@ export async function createPromotion(payload: any) {
   }
 }
 
-export async function updatePromotion(id: string, payload: any) {
+export async function updatePromotion(id: string, payload: {
+  code?: string;
+  description?: string;
+  discount_type?: 'fixed' | 'percentage';
+  value?: number;
+  min_order_amount?: number;
+  valid_until?: string | null;
+  usage_limit?: number | null;
+  is_active?: boolean;
+}) {
   try {
     const supabase = getSupabaseServer();
     const { data, error } = await supabase

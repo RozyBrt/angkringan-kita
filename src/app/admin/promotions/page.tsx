@@ -5,9 +5,10 @@ import { supabase } from '@/lib/supabase/client';
 import AdminLogin from '@/components/AdminLogin';
 import { 
   Plus, Pencil, Trash2, X, Save, Tag, Calendar, 
-  ToggleLeft, ToggleRight, Loader2, AlertCircle, User
+  ToggleLeft, ToggleRight, Loader2, User
 } from 'lucide-react';
 import { createPromotion, updatePromotion, deletePromotion } from '@/lib/actions/promotions';
+import { useCallback } from 'react';
 
 interface Promotion {
   id: string;
@@ -40,6 +41,22 @@ export default function AdminPromotions() {
   const [formUsageLimit, setFormUsageLimit] = useState('');
   const [formSubmitLoading, setFormSubmitLoading] = useState(false);
 
+  const checkSession = useCallback(async () => {
+    const { data } = await supabase.auth.getSession();
+    setSession(data.session);
+    setSessionLoading(false);
+    if (data.session) {
+      setLoading(true);
+      const { data: promoData, error } = await supabase
+        .from('promotions')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!error && promoData) setPromos(promoData);
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     checkSession();
 
@@ -59,14 +76,7 @@ export default function AdminPromotions() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
-
-  async function checkSession() {
-    const { data } = await supabase.auth.getSession();
-    setSession(data.session);
-    setSessionLoading(false);
-    if (data.session) fetchPromos();
-  }
+  }, [checkSession]);
 
   async function fetchPromos() {
     setLoading(true);
@@ -283,7 +293,7 @@ export default function AdminPromotions() {
                   <label className="block text-xs font-bold text-coffee-400 uppercase tracking-widest mb-1.5">Tipe Diskon</label>
                   <select 
                     value={formType}
-                    onChange={(e: any) => setFormType(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormType(e.target.value as 'fixed' | 'percentage')}
                     className="w-full px-4 py-3 rounded-xl bg-coffee-800 border border-coffee-700 text-cream-100 focus:ring-2 focus:ring-warm-500 outline-none"
                   >
                     <option value="percentage">Persentase (%)</option>
