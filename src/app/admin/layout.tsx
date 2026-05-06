@@ -24,6 +24,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <AdminNavLink href="/admin/dashboard">🚀 Dashboard</AdminNavLink>
             <AdminNavLink href="/admin">📋 Pesanan</AdminNavLink>
             <AdminNavLink href="/admin/menu">🍽️ Menu</AdminNavLink>
+            <AdminNavLink href="/admin/promotions">🎟️ Promo</AdminNavLink>
           </nav>
         </div>
       </div>

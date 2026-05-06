@@ -3,6 +3,7 @@
 import { getSupabaseServer } from '@/lib/supabase/server';
 import { OrderStatus } from '@/lib/types/order';
 import { revalidatePath } from 'next/cache';
+import { validatePromoCode } from './promotions';
 
 export async function updateOrderStatus(orderId: string | number, newStatus: OrderStatus) {
   try {
@@ -77,10 +78,26 @@ export async function checkoutOrder(payload: {
   tableNumber: string | null;
   note: string | null;
   total: number;
+  finalTotal: number;
+  promoCode?: string | null;
+  discountAmount?: number;
   items: Array<{ menu_item_id: string; quantity: number; price: number; subtotal: number }>;
 }) {
   try {
     const supabase = getSupabaseServer();
+
+    // 0. Validasi Promo Server-Side (The Loophole Fix 🛡️)
+    let secureFinalTotal = payload.total;
+    let secureDiscount = 0;
+
+    if (payload.promoCode) {
+      const promoCheck = await validatePromoCode(payload.promoCode, payload.total);
+      if (!promoCheck.success) {
+        return { success: false, error: promoCheck.error || 'Promo tidak valid bray.' };
+      }
+      secureFinalTotal = promoCheck.finalTotal!;
+      secureDiscount = promoCheck.discountAmount!;
+    }
 
     // 1. Validasi Meja
     if (payload.tableNumber) {
@@ -155,6 +172,7 @@ export async function checkoutOrder(payload: {
     }
 
     // 3. Create Order
+    const pointsEarned = Math.floor(secureFinalTotal * 0.1); // 10% dari total akhir
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert({
@@ -162,7 +180,10 @@ export async function checkoutOrder(payload: {
         table_number: payload.tableNumber || null,
         note: payload.note || null,
         total_price: payload.total,
-        total_amount: payload.total,
+        total_amount: secureFinalTotal,
+        promo_code_used: payload.promoCode || null,
+        discount_amount: secureDiscount,
+        points_earned: pointsEarned,
         status: 'pending',
       })
       .select()
@@ -211,7 +232,24 @@ export async function checkoutOrder(payload: {
       throw itemsError;
     }
 
-    return { success: true, orderId: order.id, orderCode: order.order_code };
+    // 4.5 Increment promo usage count
+    if (payload.promoCode) {
+      // Ambil count terbaru dulu baru kita tambahin 1 bray
+      const { data: promoData } = await supabase
+        .from('promotions')
+        .select('usage_count')
+        .eq('code', payload.promoCode.toUpperCase())
+        .single();
+      
+      if (promoData) {
+        await supabase
+          .from('promotions')
+          .update({ usage_count: promoData.usage_count + 1 })
+          .eq('code', payload.promoCode.toUpperCase());
+      }
+    }
+
+    return { success: true, orderId: order.id, orderCode: order.order_code, pointsEarned };
 
   } catch (err) {
     console.error('Runtime error in checkoutOrder:', err);

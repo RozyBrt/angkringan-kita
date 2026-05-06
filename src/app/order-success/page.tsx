@@ -6,13 +6,24 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase/client';
 import { OrderWithItems } from '@/lib/types/order';
 import { formatPrice } from '@/lib/cart';
-import { CheckCircle2, Home, Clock } from 'lucide-react';
+import { CheckCircle2, Home, Clock, Star, Tag, Sparkles } from 'lucide-react';
 
 function OrderSuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('id');
+  const pointsFromParam = Number(searchParams.get('points') || 0);
+  
   const [order, setOrder] = useState<OrderWithItems | null>(null);
   const [loading, setLoading] = useState(true);
+  const [totalPoints, setTotalPoints] = useState(0);
+
+  useEffect(() => {
+    // Ambil total poin dari localStorage
+    try {
+      const pts = parseInt(localStorage.getItem('angkringan_loyalty_points') || '0', 10);
+      setTotalPoints(pts);
+    } catch { /* ignore */ }
+  }, []);
 
   useEffect(() => {
     if (!orderId) {
@@ -58,82 +69,118 @@ function OrderSuccessContent() {
     );
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const orderAny = order as any;
+  const discountAmount = orderAny.discount_amount || 0;
+  const promoCode = orderAny.promo_code_used || null;
+  const originalTotal = orderAny.total_price || orderAny.total_amount || 0;
+  const finalTotal = orderAny.total_amount || originalTotal;
+  const earnedPoints = orderAny.points_earned || pointsFromParam;
+
   return (
-    <div className="max-w-md mx-auto px-4 py-12 text-center animate-slide-up">
-      {/* Success icon */}
-      <div className="flex justify-center mb-6">
-        <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center
-                        border-4 border-green-100">
-          <CheckCircle2 size={48} className="text-green-500" strokeWidth={1.5} />
+    <div className="max-w-md mx-auto px-4 py-10 text-center animate-slide-up">
+      {/* Success Icon */}
+      <div className="flex justify-center mb-5">
+        <div className="relative">
+          <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center border-4 border-green-100">
+            <CheckCircle2 size={48} className="text-green-500" strokeWidth={1.5} />
+          </div>
+          <div className="absolute -top-1 -right-1 w-8 h-8 bg-amber-400 rounded-full flex items-center justify-center shadow-lg">
+            <Sparkles size={16} className="text-white" />
+          </div>
         </div>
       </div>
 
-      <h1 className="font-display text-3xl font-bold text-coffee-900 mb-2">
+      <h1 className="font-display text-3xl font-bold text-coffee-900 mb-1">
         Pesanan Masuk! 🎉
       </h1>
-      <p className="text-coffee-500 mb-8">
-        Pesananmu sudah kami terima. Tunggu sebentar ya, segera kami proses!
+      <p className="text-coffee-500 mb-6 text-sm">
+        Pesananmu sudah kami terima dan sedang masuk ke dapur. Ditunggu ya!
       </p>
 
-      {order && (
-        <>
-          <div className="bg-coffee-100 border border-coffee-200 rounded-2xl p-4 mb-6">
-            <p className="text-xs text-coffee-500 font-medium uppercase tracking-widest mb-1">
-              Nomor Pesanan
-            </p>
-            <p className="font-display font-bold text-4xl tracking-wider text-coffee-900">
-              #{order.order_code || order.id.toString().split('-')[0].toUpperCase()}
-            </p>
+      {/* Order Code */}
+      <div className="bg-coffee-100 border border-coffee-200 rounded-2xl p-4 mb-4">
+        <p className="text-xs text-coffee-500 font-medium uppercase tracking-widest mb-1">
+          Nomor Pesanan
+        </p>
+        <p className="font-display font-bold text-4xl tracking-wider text-coffee-900">
+          #{order.order_code || order.id.toString().split('-')[0].toUpperCase()}
+        </p>
+      </div>
+
+      {/* Points Banner */}
+      {earnedPoints > 0 && (
+        <div className="bg-gradient-to-r from-amber-400 to-orange-400 rounded-2xl p-4 mb-4 text-white shadow-lg shadow-amber-200">
+          <div className="flex items-center justify-between">
+            <div className="text-left">
+              <p className="text-xs font-medium opacity-90">Poin Kamu Bertambah!</p>
+              <p className="font-display font-bold text-2xl">+{earnedPoints} Poin ⭐</p>
+              <p className="text-xs opacity-80 mt-0.5">Total poin kamu: {totalPoints} poin</p>
+            </div>
+            <Star size={40} className="opacity-30" fill="white" />
           </div>
-
-          <div className="bg-white rounded-2xl border border-cream-100 p-5 mb-6 text-left space-y-4">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-xs text-coffee-400 mb-0.5">Nama Pemesan</p>
-                <p className="font-bold text-coffee-900">{order.customer_name}</p>
-              </div>
-              <span className="badge-pending">
-                <Clock size={11} />
-                Menunggu
-              </span>
-            </div>
-
-            {order.note && (
-              <div>
-                <p className="text-xs text-coffee-400 mb-0.5">Catatan</p>
-                <p className="text-coffee-700 text-sm">{order.note}</p>
-              </div>
-            )}
-
-            <div>
-              <p className="text-xs text-coffee-400 mb-2">Pesanan</p>
-              <div className="space-y-1.5">
-                {order.order_items?.map((oi) => (
-                  <div
-                    key={oi.id}
-                    className="flex justify-between text-sm text-coffee-700"
-                  >
-                    <span>
-                      {oi.menu_items?.name} × {oi.quantity}
-                    </span>
-                    <span className="font-medium tabular-nums">
-                      {formatPrice(oi.subtotal)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="border-t border-cream-200 pt-3 flex justify-between">
-              <span className="font-bold text-coffee-900">Total</span>
-              <span className="font-bold text-coffee-800 text-lg tabular-nums">
-                {formatPrice(order.total_amount || order.total_price || 0)}
-              </span>
-            </div>
-          </div>
-        </>
+        </div>
       )}
 
+      {/* Order Detail */}
+      <div className="bg-white rounded-2xl border border-cream-100 p-5 mb-5 text-left space-y-4">
+        <div className="flex justify-between items-start">
+          <div>
+            <p className="text-xs text-coffee-400 mb-0.5">Nama Pemesan</p>
+            <p className="font-bold text-coffee-900">{order.customer_name}</p>
+          </div>
+          <span className="badge-pending">
+            <Clock size={11} />
+            Menunggu
+          </span>
+        </div>
+
+        {order.note && (
+          <div>
+            <p className="text-xs text-coffee-400 mb-0.5">Catatan</p>
+            <p className="text-coffee-700 text-sm">{order.note}</p>
+          </div>
+        )}
+
+        <div>
+          <p className="text-xs text-coffee-400 mb-2">Pesanan</p>
+          <div className="space-y-1.5">
+            {order.order_items?.map((oi) => (
+              <div key={oi.id} className="flex justify-between text-sm text-coffee-700">
+                <span>{oi.menu_items?.name} × {oi.quantity}</span>
+                <span className="font-medium tabular-nums">{formatPrice(oi.subtotal)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Pricing breakdown */}
+        <div className="space-y-1.5 border-t border-cream-200 pt-3">
+          {discountAmount > 0 && (
+            <>
+              <div className="flex justify-between text-sm text-coffee-500">
+                <span>Subtotal</span>
+                <span className="tabular-nums">{formatPrice(originalTotal)}</span>
+              </div>
+              <div className="flex justify-between text-sm text-green-600 font-medium">
+                <span className="flex items-center gap-1">
+                  <Tag size={12} />
+                  Diskon ({promoCode})
+                </span>
+                <span className="tabular-nums">- {formatPrice(discountAmount)}</span>
+              </div>
+            </>
+          )}
+          <div className="flex justify-between">
+            <span className="font-bold text-coffee-900">Total Dibayar</span>
+            <span className="font-bold text-coffee-800 text-lg tabular-nums">
+              {formatPrice(finalTotal)}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Actions */}
       <div className="flex flex-col sm:flex-row justify-center gap-3">
         <Link
           href="/"
@@ -145,7 +192,7 @@ function OrderSuccessContent() {
         </Link>
         {order && (
           <a
-            href={`https://wa.me/6281234567890?text=${encodeURIComponent(`Halo min, saya pesen yaa\n\nNama: *${order.customer_name}*\nID Pesanan: ${order.order_code || order.id}\nCatatan: ${order.note || '-'}\nTotal: *${formatPrice(order.total_amount || order.total_price || 0)}*\n\nBisa langsung diproses? Makasih.`)}`}
+            href={`https://wa.me/6281234567890?text=${encodeURIComponent(`Halo min, saya pesen yaa\n\nNama: *${order.customer_name}*\nID Pesanan: ${order.order_code || order.id}\nCatatan: ${order.note || '-'}\nTotal: *${formatPrice(finalTotal)}*\n\nBisa langsung diproses? Makasih.`)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 bg-[#25D366] text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-[#20bd5a] active:scale-95 transition-all shadow-md"
