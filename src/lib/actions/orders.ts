@@ -251,9 +251,10 @@ export async function checkoutOrder(payload: {
 
     return { success: true, orderId: order.id, orderCode: order.order_code, pointsEarned };
 
-  } catch (err) {
+  } catch (err: any) {
     console.error('Runtime error in checkoutOrder:', err);
-    return { success: false, error: err instanceof Error ? err.message : 'Terjadi kesalahan internal server saat checkout' };
+    const errorMsg = err instanceof Error ? err.message : (err?.message || JSON.stringify(err) || 'Terjadi kesalahan internal server saat checkout');
+    return { success: false, error: errorMsg };
   }
 }
 
