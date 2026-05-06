@@ -253,8 +253,14 @@ export async function checkoutOrder(payload: {
 
   } catch (err) {
     console.error('Runtime error in checkoutOrder:', err);
-    const errObj = err as any;
-    const errorMsg = err instanceof Error ? err.message : (errObj?.message || JSON.stringify(err) || 'Terjadi kesalahan internal server saat checkout');
+    let errorMsg = 'Terjadi kesalahan internal server saat checkout';
+    if (err instanceof Error) {
+      errorMsg = err.message;
+    } else if (typeof err === 'object' && err !== null && 'message' in err) {
+      errorMsg = String(err.message);
+    } else {
+      errorMsg = JSON.stringify(err);
+    }
     return { success: false, error: errorMsg };
   }
 }
