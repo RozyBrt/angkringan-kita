@@ -337,6 +337,7 @@ function CheckoutContent() {
             <input
               id="table-number"
               type="text"
+              maxLength={10}
               value={tableNumber}
               onChange={(e) => setTableNumber(e.target.value)}
               placeholder="Contoh: 5"
