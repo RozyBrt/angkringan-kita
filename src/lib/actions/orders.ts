@@ -251,9 +251,10 @@ export async function checkoutOrder(payload: {
 
     return { success: true, orderId: order.id, orderCode: order.order_code, pointsEarned };
 
-  } catch (err: any) {
+  } catch (err) {
     console.error('Runtime error in checkoutOrder:', err);
-    const errorMsg = err instanceof Error ? err.message : (err?.message || JSON.stringify(err) || 'Terjadi kesalahan internal server saat checkout');
+    const errObj = err as any;
+    const errorMsg = err instanceof Error ? err.message : (errObj?.message || JSON.stringify(err) || 'Terjadi kesalahan internal server saat checkout');
     return { success: false, error: errorMsg };
   }
 }
