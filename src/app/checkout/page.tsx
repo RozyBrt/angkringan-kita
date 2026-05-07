@@ -599,7 +599,7 @@ function CheckoutContent() {
                   <span className="text-[10px] font-bold text-red-400 uppercase">Penuh</span>
                 </div>
               </div>
-              <p className="text-[10px] text-coffee-400 italic italic">Tersedia 30 Meja</p>
+              <p className="text-[10px] text-coffee-400 italic">Tersedia 30 Meja</p>
             </div>
           </div>
         </div>
