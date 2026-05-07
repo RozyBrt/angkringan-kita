@@ -13,7 +13,7 @@ const CATEGORIES: { label: string; value: Category | 'Semua'; icon: React.ReactN
   { label: 'Makanan', value: 'Makanan', icon: <UtensilsCrossed size={15} /> },
 ];
 
-import { getShopStatus } from '@/lib/actions/settings';
+import { getShopStatus, ShopStatus } from '@/lib/actions/settings';
 
 export default function MenuPage() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -63,7 +63,7 @@ export default function MenuPage() {
     checkOpenStatus();
 
     // REAL-TIME: Dengerin perubahan di tabel menu_items
-    const channel = supabase
+    const menuChannel = supabase
       .channel('realtime_menu')
       .on(
         'postgres_changes',
@@ -76,17 +76,39 @@ export default function MenuPage() {
               prev.map((item) => (item.id === payload.new.id ? (payload.new as MenuItem) : item))
             );
           } else if (payload.eventType === 'DELETE') {
-            setMenuItems((prev) => prev.filter((item) => item.id === payload.old.id));
+            setMenuItems((prev) => prev.filter((item) => item.id !== payload.old.id));
           }
         }
       )
       .subscribe();
 
-    // Re-check status tiap 1 menit bray
+    // REAL-TIME: Dengerin perubahan status toko bray!
+    const settingsChannel = supabase
+      .channel('realtime_settings')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'shop_settings', filter: 'key=eq.shop_status' },
+        (payload) => {
+          const newStatus = payload.new.value as ShopStatus;
+          if (newStatus === 'open') {
+            setIsOpen(true);
+          } else if (newStatus === 'closed') {
+            setIsOpen(false);
+          } else {
+            // Re-run jadwal kalau balik ke AUTO
+            const now = new Date();
+            setIsOpen(now.getHours() >= 17 && now.getHours() <= 23);
+          }
+        }
+      )
+      .subscribe();
+
+    // Re-check status tiap 1 menit bray (buat jaga-jaga jadwal AUTO)
     const interval = setInterval(checkOpenStatus, 60000);
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(menuChannel);
+      supabase.removeChannel(settingsChannel);
       clearInterval(interval);
     };
   }, []);
