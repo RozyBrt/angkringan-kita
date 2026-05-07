@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react';
 import { getRevenueStats, getTopItems, getDetailedOrdersReport } from '@/lib/actions/orders';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
-import { Banknote, TrendingUp, ShoppingBag, Loader2, ArrowLeft, Download, FileText } from 'lucide-react';
+import { Banknote, TrendingUp, ShoppingBag, Loader2, ArrowLeft, Download } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/useToast';
+import { OrderWithItems, OrderItem } from '@/lib/types/order';
 
 export default function AnalyticsDashboard() {
   const [revenueData, setRevenueData] = useState<{ date: string; revenue: number; orders: number }[]>([]);
@@ -264,10 +265,10 @@ export default function AnalyticsDashboard() {
       ].join(',');
 
       // Map data ke baris CSV
-      const rows = orders.map(order => {
+      const rows = (orders as OrderWithItems[]).map((order: OrderWithItems) => {
         // Gabungin item-itemnya jadi satu string bray
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const items = (order.order_items as any[]).map(i => `${i.menu_items.name} (${i.quantity})`).join('; ');
+        // Detail item bray
+        const items = order.order_items.map((i: OrderItem) => `${i.menu_items?.name || 'Menu'} (${i.quantity})`).join('; ');
         
         return [
           `"${order.order_code || order.id}"`,

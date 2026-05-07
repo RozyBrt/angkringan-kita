@@ -36,7 +36,6 @@ export default function CartPage() {
       discountAmount = Math.min(appliedPromo.value, total);
     }
   }
-  }
 
   // Poin tidak boleh memotong lebih dari total setelah promo
   const totalAfterPromo = total - discountAmount;

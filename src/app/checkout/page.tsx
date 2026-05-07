@@ -5,8 +5,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useCart } from '@/hooks/useCart';
 import { formatPrice } from '@/lib/cart';
-import { checkoutOrder } from '@/lib/actions/orders';
-import { ArrowLeft, Send, User, Hash, MessageSquare, QrCode, CheckCheck, Tag, Star } from 'lucide-react';
+import { checkoutOrder, getOccupiedTables } from '@/lib/actions/orders';
+import { ArrowLeft, Send, User, Hash, MessageSquare, QrCode, CheckCheck, Tag, Star, X } from 'lucide-react';
+import { useEffect } from 'react';
+import { supabase } from '@/lib/supabase/client';
 
 // QRIS Modal Component
 function QRISModal({
@@ -163,6 +165,44 @@ function CheckoutContent() {
   const [isDone, setIsDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Table Selection State
+  const [occupiedTables, setOccupiedTables] = useState<string[]>([]);
+  const [showTablePicker, setShowTablePicker] = useState(false);
+  const [fetchingTables, setFetchingTables] = useState(false);
+
+  useEffect(() => {
+    async function fetchTables() {
+      setFetchingTables(true);
+      const res = await getOccupiedTables();
+      if (res.success && res.data) {
+        setOccupiedTables(res.data as string[]);
+      }
+      setFetchingTables(false);
+    }
+    
+    fetchTables();
+
+    // REALTIME: Dengerin perubahan meja secara live bray! 📡
+    const channel = supabase
+      .channel('table-availability')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders' },
+        async () => {
+          // Kalau ada perubahan di tabel orders, kita cek ulang meja yang penuh
+          const res = await getOccupiedTables();
+          if (res.success && res.data) {
+            setOccupiedTables(res.data as string[]);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   // QRIS Modal state
   const [showQRIS, setShowQRIS] = useState(false);
   const [orderResult, setOrderResult] = useState<{
@@ -191,6 +231,10 @@ function CheckoutContent() {
     e.preventDefault();
     if (!customerName.trim()) {
       setError('Nama pemesan harus diisi ya bray!');
+      return;
+    }
+    if (!tableNumber) {
+      setError('Pilih nomor meja dulu bray!');
       return;
     }
 
@@ -330,21 +374,48 @@ function CheckoutContent() {
           </div>
 
           <div>
-            <label htmlFor="table-number" className="block text-sm font-semibold text-coffee-800 mb-2">
+            <label className="block text-sm font-semibold text-coffee-800 mb-2">
               <span className="flex items-center gap-1.5">
                 <Hash size={14} />
-                Nomor Meja <span className="text-coffee-400 font-normal">(opsional)</span>
+                Nomor Meja <span className="text-warm-500">*</span>
               </span>
             </label>
-            <input
-              id="table-number"
-              type="text"
-              maxLength={10}
-              value={tableNumber}
-              onChange={(e) => setTableNumber(e.target.value)}
-              placeholder="Contoh: 5"
-              className="input-field"
-            />
+            
+            <div className="flex flex-col gap-2">
+              {tableNumber ? (
+                <div className="flex items-center justify-between p-4 bg-coffee-100 border-2 border-coffee-200 rounded-2xl animate-fade-in">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-coffee-800 text-white rounded-xl flex items-center justify-center font-bold font-display">
+                      {tableNumber}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-coffee-900">Meja Terpilih</p>
+                      <p className="text-xs text-coffee-500 uppercase tracking-tighter">Angkringan Kita — Meja {tableNumber}</p>
+                    </div>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={() => setShowTablePicker(true)}
+                    className="text-xs font-bold text-coffee-600 hover:text-coffee-800 underline"
+                  >
+                    Ganti
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowTablePicker(true)}
+                  className="w-full flex items-center justify-between p-4 bg-white border-2 border-dashed border-coffee-200 rounded-2xl hover:border-coffee-400 hover:bg-coffee-50 transition-all text-coffee-500"
+                >
+                  <span className="text-sm">Klik untuk pilih nomor meja...</span>
+                  <div className="w-8 h-8 bg-coffee-100 rounded-lg flex items-center justify-center">
+                    <Hash size={16} className="text-coffee-600" />
+                  </div>
+                </button>
+              )}
+            </div>
+            {/* Validasi Meja Kosong */}
+            <input type="hidden" name="table_number" value={tableNumber} required />
           </div>
 
           <div>
@@ -447,6 +518,92 @@ function CheckoutContent() {
           </button>
         </form>
       </div>
+
+      {/* Table Picker Modal bray! */}
+      {showTablePicker && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-[2.5rem] w-full max-w-md shadow-2xl animate-slide-up max-h-[90vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-cream-100 flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-display font-bold text-coffee-900">Pilih Meja</h3>
+                <p className="text-xs text-coffee-500 mt-0.5">Silakan pilih meja yang kosong bray</p>
+              </div>
+              <button 
+                onClick={() => setShowTablePicker(false)}
+                className="w-10 h-10 rounded-full bg-cream-50 flex items-center justify-center text-coffee-400 hover:text-coffee-900 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Table Grid */}
+            <div className="p-6 overflow-y-auto custom-scrollbar flex-grow">
+              {fetchingTables ? (
+                <div className="flex flex-col items-center justify-center py-20 text-coffee-300">
+                  <div className="w-8 h-8 border-3 border-coffee-100 border-t-coffee-600 rounded-full animate-spin mb-3" />
+                  <p className="text-xs font-medium italic">Mengecek ketersediaan meja...</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-5 gap-3">
+                  {Array.from({ length: 30 }).map((_, i) => {
+                    const num = (i + 1).toString();
+                    const isOccupied = occupiedTables.includes(num);
+                    const isSelected = tableNumber === num;
+
+                    return (
+                      <button
+                        key={num}
+                        disabled={isOccupied}
+                        onClick={() => {
+                          setTableNumber(num);
+                          setShowTablePicker(false);
+                        }}
+                        type="button"
+                        className={`
+                          aspect-square rounded-2xl flex flex-col items-center justify-center transition-all relative overflow-hidden
+                          ${isOccupied 
+                            ? 'bg-red-50 text-red-300 border-red-100 cursor-not-allowed opacity-60' 
+                            : isSelected 
+                              ? 'bg-coffee-800 text-white border-coffee-900 scale-95 shadow-inner' 
+                              : 'bg-cream-50 text-coffee-700 border-cream-200 hover:border-coffee-400 hover:bg-cream-100'
+                          }
+                          border-2
+                        `}
+                      >
+                        <span className="text-lg font-display font-black leading-none">{num}</span>
+                        <span className="text-[8px] uppercase font-bold tracking-tighter mt-1">
+                          {isOccupied ? 'Penuh' : isSelected ? 'Pilih' : 'Kosong'}
+                        </span>
+                        {isOccupied && (
+                          <div className="absolute top-1 right-1">
+                            <X size={8} />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-6 bg-cream-50 rounded-b-[2.5rem] flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-cream-200 border border-cream-300" />
+                  <span className="text-[10px] font-bold text-coffee-600 uppercase">Kosong</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-red-100 border border-red-200" />
+                  <span className="text-[10px] font-bold text-red-400 uppercase">Penuh</span>
+                </div>
+              </div>
+              <p className="text-[10px] text-coffee-400 italic italic">Tersedia 30 Meja</p>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

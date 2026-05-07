@@ -27,17 +27,20 @@ Proyek ini dibangun menggunakan kumpulan teknologi modern (Modern Stack):
 * **Checkout Cepat**: Formulir pemesanan ringkas. Setelah proses berhasil, pelanggan mendapat resi/nomor tunggu.
 * **Hubungi via WhatsApp**: Tersedia pintasan otomatis (*WA Alert*) untuk pelanggan langsung menghubungi nomor kasir apabila ada pesanan tambahan/urgent.
 * **Lacak Pesanan Cerdas (Intelligent Search)**: Pelanggan dapat memantau apakah pesanannya sedang "Diproses" atau "Selesai", asyiknya tanpa harus memasukkan UUID panjang! Aplikasi mendukung pemanggilan pesanan lewat *Kode Pesanan Asli* (misal: `#7FAA`), berdasarkan data riwayat peramban (*Smart Local History*), atau kamu cukup ketikkan *Nama Pemesan*.
+* **Visual Table Picker 🪑**: Pelanggan dapat memilih 1 dari 30 meja yang tersedia melalui grid interaktif. Status meja (Kosong/Penuh) terupdate secara **Real-time**, sehingga tidak ada lagi tabrakan nomor meja.
 * **Sistem Kupon & Promo 🎟️**: Pelanggan bisa memasukkan kode promo di keranjang untuk mendapatkan diskon (Persentase atau Potongan Harga). Sistem dilengkapi validasi *minimum order* dan kuota pemakaian.
 * **Simulasi QRIS 💳**: Pengalaman pembayaran modern dengan tampilan QRIS yang bersih dan instruksi pembayaran yang jelas.
 * **Loyalty Points ⭐**: Setiap transaksi sukses, pelanggan akan menabung poin loyalitas (10% dari total belanja) yang tersimpan otomatis di perangkat mereka untuk kunjungan berikutnya.
-* **Halaman Tentang Angkringan**: Portal info lokasi lapak dan jam operasional angkringan. Layar *mobile-friendly* dilengkapi petunjuk G-Maps interaktif!
+* **Notifikasi Status Pesanan 🔔**: Dilengkapi Supabase Realtime di halaman sukses. Pelanggan akan menerima notifikasi otomatis (*Toast* & Suara) saat admin mengubah status pesanan menjadi "Ready".
 
 ### Untuk Admin Web
-* **Dashboard Tersembunyi**: Diakses secara rahasia melalui tautan bawah (`/admin`) dengan *email + password* (Sistem Auth Supabase).
-* **Live Orders (Supabase Realtime)**: Tak perlu tegang me-*refresh* layar kasir. Jika pembeli menekan pesan, order akan otomatis berbunyi dan lompat ke layar antrean Admin detik itu juga dengan lencana **"Baru!"**.
-* **Manajemen Pesanan (*Order Station*)**: Filter pemesanan ("Menunggu" vs "Selesai"). Kasir/Admin menandai order kelar hanya dalam satu kali klik. Status kelar langsung menjalar ke laman perangkat pelanggan.
-* **Manajemen Etalase (Toko Menu CRUD)**: Kasir dapat menambahkan menu baru, mengedit harga/tipe, menghapus, sampai "Men-nonaktifkan" hidangan dengan satu tombol sakelar kapan pun bahannya ludes di dapur (**Tandai Habis**)!
-* **Kelola Promo Realtime 🎫**: Halaman khusus Admin untuk membuat, memantau, dan menonaktifkan kode promo secara *real-time*. Dilengkapi statistik jumlah pemakaian voucher secara langsung.
+* **Dashboard Tersembunyi**: Diakses secara rahasia melalui tautan bawah (`/admin`) dengan *email + password*.
+* **Live Orders (Supabase Realtime)**: Tak perlu tegang me-*refresh* layar kasir. Jika pembeli menekan pesan, order akan otomatis berbunyi dan muncul di antrean Admin dengan lencana **"Baru!"**.
+* **Analytical Dashboard 📊**: Pantau performa bisnis dengan grafik pendapatan harian, statistik menu terlaris, dan ringkasan cuan mingguan secara visual.
+* **Export Laporan Penjualan (CSV) 📂**: Admin dapat menarik laporan penjualan mendalam (detail pesanan, diskon, poin, metode bayar) ke format CSV untuk pembukuan profesional.
+* **Manajemen Etalase (Toko Menu CRUD)**: Kasir dapat menambahkan menu baru, mengedit harga/tipe, atau menonaktifkan hidangan yang habis (**Tandai Habis**) dengan satu kali klik.
+* **Kelola Promo Realtime 🎫**: Halaman khusus Admin untuk membuat, memantau, dan menonaktifkan kode promo secara *real-time*.
+
 
 ---
 

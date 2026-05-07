@@ -22,6 +22,9 @@ export interface Order {
   order_code?: string;
   payment_status: 'unpaid' | 'paid';
   payment_method?: string | null;
+  discount_amount?: number;
+  promo_code_used?: string | null;
+  points_earned?: number;
 }
 
 export interface OrderItem {

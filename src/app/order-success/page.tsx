@@ -62,8 +62,8 @@ function OrderSuccessContent() {
           // Update state biar UI berubah
           setOrder((prev) => prev ? { ...prev, status: newOrder.status } : null);
 
-          // Tembak Notifikasi kalau sudah selesai
-          if (newOrder.status === 'completed') {
+          // Tembak Notifikasi kalau sudah siap
+          if (newOrder.status === 'ready' || newOrder.status === 'served') {
             showToast('Pesananmu sudah siap dinikmati bray! 🎉☕', 'success');
             // Mainin suara notif dikit biar mantap (opsional)
             try {
@@ -106,13 +106,11 @@ function OrderSuccessContent() {
     );
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const orderAny = order as any;
-  const discountAmount = orderAny.discount_amount || 0;
-  const promoCode = orderAny.promo_code_used || null;
-  const originalTotal = orderAny.total_price || orderAny.total_amount || 0;
-  const finalTotal = orderAny.total_amount || originalTotal;
-  const earnedPoints = (orderAny.points_earned > 0 ? orderAny.points_earned : null) ?? pointsFromParam;
+  const discountAmount = order.discount_amount || 0;
+  const promoCode = order.promo_code_used || null;
+  const originalTotal = order.total_price || order.total_amount || 0;
+  const finalTotal = order.total_amount || originalTotal;
+  const earnedPoints = (order.points_earned && order.points_earned > 0 ? order.points_earned : null) ?? pointsFromParam;
   
   // Hitung poin yang dipakai (selisih total_price dan total_amount setelah dikurangi diskon promo)
   const pointsUsed = Math.max(0, (originalTotal - discountAmount) - finalTotal);
@@ -169,7 +167,7 @@ function OrderSuccessContent() {
             <p className="text-xs text-coffee-400 mb-0.5">Nama Pemesan</p>
             <p className="font-bold text-coffee-900">{order.customer_name}</p>
           </div>
-          {order.status === 'completed' ? (
+          {(order.status === 'ready' || order.status === 'served') ? (
             <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 animate-bounce">
               <CheckCircle2 size={11} />
               Siap Dinikmati!

@@ -1,7 +1,7 @@
 'use server';
 
 import { getSupabaseServer } from '@/lib/supabase/server';
-import { OrderStatus } from '@/lib/types/order';
+import { OrderStatus, OrderWithItems } from '@/lib/types/order';
 import { revalidatePath } from 'next/cache';
 import { validatePromoCode } from './promotions';
 
@@ -360,9 +360,18 @@ export async function getTopItems(days: number = 7) {
     }
 
     const itemCounts: Record<string, number> = {};
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    data.forEach((item: any) => {
-      const menuName = item.menu_items?.name;
+    
+    // Sesuaikan casting dengan apa yang Supabase balikin bray (kadang bentuknya array kalau join)
+    const items = data as unknown as Array<{ 
+      quantity: number, 
+      menu_items: { name: string } | { name: string }[]
+    }>;
+
+    items.forEach((item) => {
+      // Ambil nama menu, handle kalau dia array atau objek bray
+      const menuData = Array.isArray(item.menu_items) ? item.menu_items[0] : item.menu_items;
+      const menuName = menuData?.name;
+      
       if (menuName) {
         itemCounts[menuName] = (itemCounts[menuName] || 0) + item.quantity;
       }
@@ -379,3 +388,72 @@ export async function getTopItems(days: number = 7) {
     return { success: false, data: [] };
   }
 }
+
+export async function getDetailedOrdersReport(days: number = 30) {
+  try {
+    const supabase = getSupabaseServer();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - (days - 1));
+    startDate.setHours(0, 0, 0, 0);
+
+    const { data, error } = await supabase
+      .from('orders')
+      .select(`
+        id,
+        order_code,
+        customer_name,
+        table_number,
+        total_price,
+        total_amount,
+        discount_amount,
+        promo_code_used,
+        payment_status,
+        payment_method,
+        status,
+        created_at,
+        order_items (
+          id,
+          order_id,
+          menu_item_id,
+          quantity,
+          price,
+          subtotal,
+          notes,
+          menu_items ( name )
+        )
+      `)
+      .gte('created_at', startDate.toISOString())
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    return { success: true, data: data as unknown as OrderWithItems[] };
+  } catch (err) {
+    console.error('Gagal generate report:', err);
+    return { success: false, error: err instanceof Error ? err.message : 'Gagal narik data laporan' };
+  }
+}
+
+export async function getOccupiedTables() {
+  try {
+    const supabase = getSupabaseServer();
+    const { data, error } = await supabase
+      .from('orders')
+      .select('table_number')
+      .not('status', 'in', '("served","cancelled")')
+      .not('table_number', 'is', null);
+
+    if (error) throw error;
+    
+    // Kembalikan array nomor meja yang unik bray
+    return { 
+      success: true, 
+      data: Array.from(new Set(data.map(o => o.table_number))) 
+    };
+  } catch (err) {
+    console.error('Gagal ambil data meja:', err);
+    return { success: false, data: [] };
+  }
+}
+
+
