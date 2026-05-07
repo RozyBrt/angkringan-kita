@@ -87,17 +87,19 @@ export default function MenuPage() {
       .channel('realtime_settings')
       .on(
         'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'shop_settings', filter: 'key=eq.shop_status' },
+        { event: '*', schema: 'public', table: 'shop_settings' },
         (payload) => {
-          const newStatus = payload.new.value as ShopStatus;
-          if (newStatus === 'open') {
-            setIsOpen(true);
-          } else if (newStatus === 'closed') {
-            setIsOpen(false);
-          } else {
-            // Re-run jadwal kalau balik ke AUTO
-            const now = new Date();
-            setIsOpen(now.getHours() >= 17 && now.getHours() <= 23);
+          const newData = payload.new as { key: string, value: string };
+          if (newData && newData.key === 'shop_status') {
+            const newStatus = newData.value as ShopStatus;
+            if (newStatus === 'open') {
+              setIsOpen(true);
+            } else if (newStatus === 'closed') {
+              setIsOpen(false);
+            } else {
+              const now = new Date();
+              setIsOpen(now.getHours() >= 17 && now.getHours() <= 23);
+            }
           }
         }
       )
