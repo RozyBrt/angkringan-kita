@@ -9,9 +9,10 @@ import { useState } from 'react';
 
 interface MenuCardProps {
   item: MenuItem;
+  isShopOpen?: boolean;
 }
 
-export default function MenuCard({ item }: MenuCardProps) {
+export default function MenuCard({ item, isShopOpen = true }: MenuCardProps) {
   const { addItem, cart } = useCart();
   const [added, setAdded] = useState(false);
   const [imgError, setImgError] = useState(false);
@@ -19,8 +20,8 @@ export default function MenuCard({ item }: MenuCardProps) {
   const cartItem = cart.items.find((i) => i.menuItem.id === item.id);
   const quantity = cartItem?.quantity ?? 0;
 
-  // LOGIKA PINTAR: Menu beneran tersedia kalau statusnya AKTIF DAN (Gak dilacak stoknya ATAU stoknya > 0)
-  const effectivelyAvailable = item.is_available && (!item.is_track_stock || (item.stock_quantity ?? 0) > 0);
+  // LOGIKA PINTAR: Menu beneran tersedia kalau statusnya AKTIF DAN (Gak dilacak stoknya ATAU stoknya > 0) DAN Tokonya BUKA
+  const effectivelyAvailable = item.is_available && (!item.is_track_stock || (item.stock_quantity ?? 0) > 0) && isShopOpen;
 
   const handleAdd = () => {
     if (!effectivelyAvailable) return;

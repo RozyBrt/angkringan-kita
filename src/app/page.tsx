@@ -212,6 +212,16 @@ export default function MenuPage() {
       {/* Menu grid */}
       {!loading && !error && (
         <>
+          {!isOpen && (
+            <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 animate-fade-in">
+              <span className="text-2xl">🌙</span>
+              <div>
+                <p className="text-red-200 font-bold text-sm">Maaf, Kami Sedang Tutup</p>
+                <p className="text-red-300/70 text-xs">Menu tetap bisa dilihat, tapi pemesanan sedang dinonaktifkan sementara.</p>
+              </div>
+            </div>
+          )}
+
           {filtered.length === 0 ? (
             <div className="text-center py-20 text-coffee-400">
               <p className="text-5xl mb-4">🍃</p>
@@ -221,7 +231,7 @@ export default function MenuPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filtered.map((item) => (
-                <MenuCard key={item.id} item={item} />
+                <MenuCard key={item.id} item={item} isShopOpen={isOpen} />
               ))}
             </div>
           )}

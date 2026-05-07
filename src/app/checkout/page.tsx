@@ -142,16 +142,21 @@ function QRISModal({
   );
 }
 
+import { getShopStatus, ShopStatus } from '@/lib/actions/settings';
+
 function CheckoutContent() {
   const searchParams = useSearchParams();
   const { cart, total, emptyCart } = useCart();
   const router = useRouter();
 
-  // Ambil data promo dari URL param (dikirim dari Cart page)
+  // Ambil data promo dari URL param
   const promoCodeParam = searchParams.get('promo');
   const discountAmountParam = Number(searchParams.get('discount') || 0);
   const pointsUsedParam = Number(searchParams.get('points_used') || 0);
   const finalTotalParam = Number(searchParams.get('final') || total);
+
+  // Shop Status State
+  const [isShopOpen, setIsShopOpen] = useState(true);
 
   // Gunakan finalTotalParam kalau ada promo valid, kalau tidak pakai total keranjang
   const hasPromo = promoCodeParam && discountAmountParam > 0;
@@ -171,8 +176,20 @@ function CheckoutContent() {
   const [fetchingTables, setFetchingTables] = useState(false);
 
   useEffect(() => {
-    async function fetchTables() {
+    async function init() {
       setFetchingTables(true);
+      
+      // Cek Status Toko Bray
+      const status = await getShopStatus();
+      if (status === 'open') {
+        setIsShopOpen(true);
+      } else if (status === 'closed') {
+        setIsShopOpen(false);
+      } else {
+        const hours = new Date().getHours();
+        setIsShopOpen(hours >= 17 && hours <= 23);
+      }
+
       const res = await getOccupiedTables();
       if (res.success && res.data) {
         setOccupiedTables(res.data as string[]);
@@ -180,16 +197,15 @@ function CheckoutContent() {
       setFetchingTables(false);
     }
     
-    fetchTables();
+    init();
 
-    // REALTIME: Dengerin perubahan meja secara live bray! 📡
-    const channel = supabase
+    // REALTIME: Dengerin perubahan meja DAN status toko bray! 📡
+    const tableChannel = supabase
       .channel('table-availability')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'orders' },
         async () => {
-          // Kalau ada perubahan di tabel orders, kita cek ulang meja yang penuh
           const res = await getOccupiedTables();
           if (res.success && res.data) {
             setOccupiedTables(res.data as string[]);
@@ -198,8 +214,31 @@ function CheckoutContent() {
       )
       .subscribe();
 
+    const settingsChannel = supabase
+      .channel('checkout-settings')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'shop_settings' },
+        (payload) => {
+          const newData = payload.new as { key: string, value: string };
+          if (newData && newData.key === 'shop_status') {
+            const newStatus = newData.value as ShopStatus;
+            if (newStatus === 'open') {
+              setIsShopOpen(true);
+            } else if (newStatus === 'closed') {
+              setIsShopOpen(false);
+            } else {
+              const hours = new Date().getHours();
+              setIsShopOpen(hours >= 17 && hours <= 23);
+            }
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(tableChannel);
+      supabase.removeChannel(settingsChannel);
     };
   }, []);
 
@@ -235,6 +274,11 @@ function CheckoutContent() {
     }
     if (!tableNumber) {
       setError('Pilih nomor meja dulu bray!');
+      return;
+    }
+
+    if (!isShopOpen) {
+      setError('Maaf bray, toko sedang tutup. Pesanan tidak bisa diproses.');
       return;
     }
 
@@ -505,13 +549,19 @@ function CheckoutContent() {
 
           <button
             type="submit"
-            disabled={loading || isDone}
-            className="btn-primary w-full flex items-center justify-center gap-2 text-base py-3.5"
+            disabled={loading || isDone || !isShopOpen}
+            className={`w-full flex items-center justify-center gap-2 text-base py-3.5 rounded-2xl font-bold transition-all active:scale-95 shadow-lg ${
+              !isShopOpen 
+                ? 'bg-zinc-200 text-zinc-400 cursor-not-allowed shadow-none' 
+                : 'bg-coffee-700 hover:bg-coffee-800 text-cream-50 shadow-coffee-200'
+            }`}
           >
             {loading ? (
               <><span className="w-4 h-4 border-2 border-cream-400 border-t-cream-50 rounded-full animate-spin" /> Memproses...</>
             ) : isDone ? (
               <><Send size={16} /> Berhasil!</>
+            ) : !isShopOpen ? (
+              <>Toko Sedang Tutup 🌙</>
             ) : (
               <><QrCode size={16} /> Lanjut ke Pembayaran QRIS</>
             )}
