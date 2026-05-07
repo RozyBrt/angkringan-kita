@@ -67,6 +67,25 @@ export default function MenuPage() {
     };
   }, []);
 
+  const [isOpen, setIsOpen] = useState(true);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    // Cek jam buka bray
+    function checkOpenStatus() {
+      const now = new Date();
+      const hours = now.getHours();
+      // Anggap buka jam 17:00 sampe 24:00 bray
+      setIsOpen(hours >= 17 && hours <= 23);
+      setCurrentTime(now);
+    }
+
+    checkOpenStatus();
+    // Re-check tiap 1 menit bray
+    const interval = setInterval(checkOpenStatus, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
   const filtered = menuItems.filter((item) => {
     const matchCategory = selectedCategory === 'Semua' || item.category === selectedCategory;
     const matchSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -81,10 +100,13 @@ export default function MenuPage() {
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800&q=80')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-coffee-900 to-transparent"></div>
         <div className="relative p-8 md:p-12 text-center flex flex-col items-center">
-          <div className="inline-flex items-center gap-2 bg-warm-500/20 text-warm-200 border border-warm-500/30
-                          px-4 py-1.5 rounded-full text-sm font-medium mb-4 backdrop-blur-sm">
-            <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse-soft" />
-            Kami Buka Sekarang
+          <div className={`inline-flex items-center gap-2 border px-4 py-1.5 rounded-full text-sm font-medium mb-4 backdrop-blur-sm ${
+            isOpen 
+              ? 'bg-warm-500/20 text-warm-200 border-warm-500/30' 
+              : 'bg-red-500/20 text-red-200 border-red-500/30'
+          }`}>
+            <span className={`w-2 h-2 rounded-full ${isOpen ? 'bg-green-400 animate-pulse-soft' : 'bg-red-400'}`} />
+            {isOpen ? 'Kami Buka Sekarang' : 'Tutup Sementara'}
           </div>
           <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-bold text-cream-50 mb-3 drop-shadow-md">
             Selamat Datang di <span className="text-warm-400">Angkringan Kita</span>
