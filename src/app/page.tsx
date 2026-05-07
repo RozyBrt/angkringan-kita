@@ -68,7 +68,6 @@ export default function MenuPage() {
   }, []);
 
   const [isOpen, setIsOpen] = useState(true);
-  const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
     // Cek jam buka bray
@@ -77,7 +76,6 @@ export default function MenuPage() {
       const hours = now.getHours();
       // Anggap buka jam 17:00 sampe 24:00 bray
       setIsOpen(hours >= 17 && hours <= 23);
-      setCurrentTime(now);
     }
 
     checkOpenStatus();
