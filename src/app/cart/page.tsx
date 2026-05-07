@@ -6,7 +6,7 @@ import { useCart } from '@/hooks/useCart';
 import { formatPrice } from '@/lib/cart';
 import CartItem from '@/components/CartItem';
 import { validatePromoCode, hasActivePromotions } from '@/lib/actions/promotions';
-import { ShoppingBag, Trash2, ArrowLeft, ArrowRight, Tag, X, CheckCircle2, Loader2 } from 'lucide-react';
+import { ShoppingBag, Trash2, ArrowLeft, ArrowRight, Tag, X, CheckCircle2, Loader2, Star } from 'lucide-react';
 
 export default function CartPage() {
   const { cart, total, emptyCart, itemCount } = useCart();
@@ -23,6 +23,10 @@ export default function CartPage() {
     min_order_amount: number;
   } | null>(null);
 
+  // Points system state
+  const [availablePoints, setAvailablePoints] = useState(0);
+  const [usePoints, setUsePoints] = useState(false);
+
   // Hitung ulang diskon tiap kali total atau promo berubah bray
   let discountAmount = 0;
   if (appliedPromo) {
@@ -32,7 +36,12 @@ export default function CartPage() {
       discountAmount = Math.min(appliedPromo.value, total);
     }
   }
-  const finalTotal = total - discountAmount;
+  }
+
+  // Poin tidak boleh memotong lebih dari total setelah promo
+  const totalAfterPromo = total - discountAmount;
+  const pointsToUse = usePoints ? Math.min(availablePoints, totalAfterPromo) : 0;
+  const finalTotal = totalAfterPromo - pointsToUse;
 
   useEffect(() => {
     async function checkPromos() {
@@ -40,6 +49,12 @@ export default function CartPage() {
       setIsPromoVisible(active);
     }
     checkPromos();
+
+    // Load points dari local storage
+    try {
+      const pts = parseInt(localStorage.getItem('angkringan_loyalty_points') || '0', 10);
+      setAvailablePoints(pts);
+    } catch { /* ignore */ }
   }, []);
 
   // Drop promo if total falls below minimum
@@ -181,6 +196,39 @@ export default function CartPage() {
         </div>
       )}
 
+      {/* Points Redemption Section */}
+      {availablePoints > 0 && (
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border border-amber-100 p-5 mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="font-semibold text-amber-800 flex items-center gap-2 text-sm">
+              <Star size={16} fill="currentColor" />
+              Poin Loyalitas
+            </h2>
+            <span className="text-xs font-bold bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full">
+              {availablePoints} Poin
+            </span>
+          </div>
+          <p className="text-xs text-amber-700 mb-3">
+            Kamu bisa pakai poinmu buat dapet potongan harga (1 Poin = Rp1).
+          </p>
+          <label className="flex items-center gap-3 cursor-pointer group">
+            <div className="relative">
+              <input
+                type="checkbox"
+                className="sr-only"
+                checked={usePoints}
+                onChange={(e) => setUsePoints(e.target.checked)}
+              />
+              <div className={`block w-10 h-6 rounded-full transition-colors ${usePoints ? 'bg-amber-500' : 'bg-cream-300'}`}></div>
+              <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${usePoints ? 'translate-x-4' : ''}`}></div>
+            </div>
+            <span className="text-sm font-medium text-amber-900 group-hover:text-amber-700 transition-colors">
+              Pakai {Math.min(availablePoints, totalAfterPromo)} Poin (- {formatPrice(Math.min(availablePoints, totalAfterPromo))})
+            </span>
+          </label>
+        </div>
+      )}
+
       {/* Order summary */}
       <div className="bg-white rounded-2xl border border-cream-100 p-5 mb-5">
         <h2 className="font-semibold text-coffee-800 mb-4 flex items-center gap-2">
@@ -217,10 +265,20 @@ export default function CartPage() {
             </div>
           )}
 
+          {usePoints && pointsToUse > 0 && (
+            <div className="flex justify-between text-sm text-amber-600 font-medium">
+              <span className="flex items-center gap-1">
+                <Star size={12} fill="currentColor" />
+                Tukar Poin
+              </span>
+              <span className="tabular-nums">- {formatPrice(pointsToUse)}</span>
+            </div>
+          )}
+
           <div className="flex justify-between pt-2 border-t border-cream-200">
             <span className="font-bold text-coffee-900">Total</span>
             <div className="text-right">
-              {appliedPromo && (
+              {(appliedPromo || usePoints) && (
                 <p className="text-xs text-coffee-400 line-through tabular-nums">{formatPrice(total)}</p>
               )}
               <span className="font-bold text-coffee-800 text-lg tabular-nums">
@@ -231,7 +289,9 @@ export default function CartPage() {
 
           {/* Poin preview */}
           <div className="flex items-center justify-between bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 mt-2">
-            <span className="text-xs text-amber-700 font-medium">⭐ Poin yang akan kamu dapat</span>
+            <span className="text-xs text-amber-700 font-medium flex items-center gap-1">
+              <Star size={12} fill="currentColor" /> Poin yang akan kamu dapat
+            </span>
             <span className="text-xs font-bold text-amber-700">+{Math.floor(finalTotal * 0.1)} poin</span>
           </div>
         </div>
@@ -247,7 +307,7 @@ export default function CartPage() {
           Tambah Lagi
         </Link>
         <Link
-          href={`/checkout?promo=${appliedPromo?.code || ''}&discount=${discountAmount}&final=${finalTotal}`}
+          href={`/checkout?promo=${appliedPromo?.code || ''}&discount=${discountAmount}&points_used=${pointsToUse}&final=${finalTotal}`}
           id="checkout-button"
           className="btn-primary flex items-center justify-center gap-2 flex-1"
         >

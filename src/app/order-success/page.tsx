@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase/client';
+import { useToast } from '@/hooks/useToast';
 import { OrderWithItems } from '@/lib/types/order';
 import { formatPrice } from '@/lib/cart';
 import { CheckCircle2, Home, Clock, Star, Tag, Sparkles } from 'lucide-react';
@@ -16,6 +17,7 @@ function OrderSuccessContent() {
   const [order, setOrder] = useState<OrderWithItems | null>(null);
   const [loading, setLoading] = useState(true);
   const [totalPoints, setTotalPoints] = useState(0);
+  const { showToast } = useToast();
 
   useEffect(() => {
     // Ambil total poin dari localStorage
@@ -41,7 +43,42 @@ function OrderSuccessContent() {
       setLoading(false);
     }
     fetchOrder();
-  }, [orderId]);
+
+    // REALTIME: Dengerin kalau status pesanan berubah bray! 👂
+    const channel = supabase
+      .channel(`order-status-${orderId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders',
+          filter: `id=eq.${orderId}`,
+        },
+        (payload) => {
+          const newOrder = payload.new as OrderWithItems;
+          console.log('Status pesanan berubah:', newOrder.status);
+          
+          // Update state biar UI berubah
+          setOrder((prev) => prev ? { ...prev, status: newOrder.status } : null);
+
+          // Tembak Notifikasi kalau sudah selesai
+          if (newOrder.status === 'completed') {
+            showToast('Pesananmu sudah siap dinikmati bray! 🎉☕', 'success');
+            // Mainin suara notif dikit biar mantap (opsional)
+            try {
+              const audio = new Audio('/notification.mp3');
+              audio.play().catch(() => {}); 
+            } catch { /* ignore */ }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [orderId, showToast]);
 
   if (loading) {
     return (
@@ -76,6 +113,9 @@ function OrderSuccessContent() {
   const originalTotal = orderAny.total_price || orderAny.total_amount || 0;
   const finalTotal = orderAny.total_amount || originalTotal;
   const earnedPoints = (orderAny.points_earned > 0 ? orderAny.points_earned : null) ?? pointsFromParam;
+  
+  // Hitung poin yang dipakai (selisih total_price dan total_amount setelah dikurangi diskon promo)
+  const pointsUsed = Math.max(0, (originalTotal - discountAmount) - finalTotal);
 
   return (
     <div className="max-w-md mx-auto px-4 py-10 text-center animate-slide-up">
@@ -129,10 +169,17 @@ function OrderSuccessContent() {
             <p className="text-xs text-coffee-400 mb-0.5">Nama Pemesan</p>
             <p className="font-bold text-coffee-900">{order.customer_name}</p>
           </div>
-          <span className="badge-pending">
-            <Clock size={11} />
-            Menunggu
-          </span>
+          {order.status === 'completed' ? (
+            <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 animate-bounce">
+              <CheckCircle2 size={11} />
+              Siap Dinikmati!
+            </span>
+          ) : (
+            <span className="badge-pending">
+              <Clock size={11} />
+              Menunggu
+            </span>
+          )}
         </div>
 
         {order.note && (
@@ -170,6 +217,15 @@ function OrderSuccessContent() {
                 <span className="tabular-nums">- {formatPrice(discountAmount)}</span>
               </div>
             </>
+          )}
+          {pointsUsed > 0 && (
+            <div className="flex justify-between text-sm text-amber-600 font-medium">
+              <span className="flex items-center gap-1">
+                <Star size={12} fill="currentColor" />
+                Tukar Poin
+              </span>
+              <span className="tabular-nums">- {formatPrice(pointsUsed)}</span>
+            </div>
           )}
           <div className="flex justify-between">
             <span className="font-bold text-coffee-900">Total Dibayar</span>

@@ -1,16 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getRevenueStats, getTopItems } from '@/lib/actions/orders';
+import { getRevenueStats, getTopItems, getDetailedOrdersReport } from '@/lib/actions/orders';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
-import { Banknote, TrendingUp, ShoppingBag, Loader2, ArrowLeft } from 'lucide-react';
+import { Banknote, TrendingUp, ShoppingBag, Loader2, ArrowLeft, Download, FileText } from 'lucide-react';
 import Link from 'next/link';
+import { useToast } from '@/hooks/useToast';
 
 export default function AnalyticsDashboard() {
   const [revenueData, setRevenueData] = useState<{ date: string; revenue: number; orders: number }[]>([]);
   const [topItems, setTopItems] = useState<{ name: string; value: number }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [days, setDays] = useState(7);
+  const { showToast } = useToast();
 
   useEffect(() => {
     async function loadData() {
@@ -81,6 +84,20 @@ export default function AnalyticsDashboard() {
         <Link href="/admin/dashboard" className="px-5 py-2.5 bg-coffee-900/60 hover:bg-coffee-800 text-cream-200 rounded-xl font-bold flex items-center gap-2 transition-all border border-coffee-700/50 backdrop-blur-md shadow-lg w-fit">
           <ArrowLeft size={18} /> Kembali ke Dapur
         </Link>
+
+        {/* Export Button bray! */}
+        <button
+          onClick={handleExportReport}
+          disabled={exporting}
+          className="px-6 py-2.5 bg-green-600 hover:bg-green-500 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-green-900/20 active:scale-95 disabled:opacity-50"
+        >
+          {exporting ? (
+            <Loader2 size={18} className="animate-spin" />
+          ) : (
+            <Download size={18} />
+          )}
+          Download Laporan (CSV)
+        </button>
       </div>
 
       <div className="max-w-6xl mx-auto space-y-8 relative z-10">
@@ -219,4 +236,70 @@ export default function AnalyticsDashboard() {
       </div>
     </div>
   );
+
+  async function handleExportReport() {
+    setExporting(true);
+    try {
+      const res = await getDetailedOrdersReport(days);
+      if (!res.success || !res.data) {
+        showToast(res.error || 'Gagal mengambil data laporan', 'error');
+        return;
+      }
+
+      const orders = res.data;
+      
+      // Header CSV
+      const headers = [
+        'ID Pesanan', 
+        'Tanggal', 
+        'Pelanggan', 
+        'Meja', 
+        'Total Bruto', 
+        'Diskon', 
+        'Promo', 
+        'Total Bersih', 
+        'Metode Bayar', 
+        'Status', 
+        'Item Pesanan'
+      ].join(',');
+
+      // Map data ke baris CSV
+      const rows = orders.map(order => {
+        // Gabungin item-itemnya jadi satu string bray
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const items = (order.order_items as any[]).map(i => `${i.menu_items.name} (${i.quantity})`).join('; ');
+        
+        return [
+          `"${order.order_code || order.id}"`,
+          `"${new Date(order.created_at).toLocaleString('id-ID')}"`,
+          `"${order.customer_name}"`,
+          `"${order.table_number || '-'}"`,
+          order.total_price,
+          order.discount_amount,
+          `"${order.promo_code_used || '-'}"`,
+          order.total_amount,
+          `"${order.payment_method || '-'}"`,
+          `"${order.status}"`,
+          `"${items}"`
+        ].join(',');
+      });
+
+      const csvContent = [headers, ...rows].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `Laporan_AngkringanKita_${days}Hari_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      showToast('Laporan berhasil didownload bray! 📈', 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Gagal mengunduh laporan', 'error');
+    } finally {
+      setExporting(false);
+    }
+  }
 }

@@ -1,14 +1,9 @@
 'use client';
 
-import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
+import { createContext, useContext, ReactNode, useCallback } from 'react';
+import toast, { Toaster } from 'react-hot-toast';
 
 type ToastType = 'success' | 'error' | 'info';
-
-interface Toast {
-  id: number;
-  message: string;
-  type: ToastType;
-}
 
 interface ToastContextValue {
   showToast: (message: string, type?: ToastType) => void;
@@ -17,39 +12,43 @@ interface ToastContextValue {
 const ToastContext = createContext<ToastContextValue | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
-  const [toasts, setToasts] = useState<Toast[]>([]);
-
   const showToast = useCallback((message: string, type: ToastType = 'info') => {
-    const id = Date.now();
-    setToasts((prev) => [...prev, { id, message, type }]);
+    const options = {
+      duration: 4000,
+      style: {
+        borderRadius: '12px',
+        background: '#3b1f0a', // coffee-900
+        color: '#fdfaf6', // cream-50
+        fontSize: '14px',
+        fontWeight: '500',
+        border: '1px solid #4a2d18',
+      },
+    };
 
-    // Auto remove after 3s
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 3000);
+    if (type === 'success') {
+      toast.success(message, {
+        ...options,
+        style: { ...options.style, background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0' },
+      });
+    } else if (type === 'error') {
+      toast.error(message, {
+        ...options,
+        style: { ...options.style, background: '#fef2f2', color: '#991b1b', border: '1px solid #fecaca' },
+      });
+    } else {
+      toast(message, options);
+    }
   }, []);
 
   return (
     <ToastContext.Provider value={{ showToast }}>
+      <Toaster 
+        position="bottom-right"
+        toastOptions={{
+          className: 'animate-slide-up',
+        }}
+      />
       {children}
-      {/* Toast Container */}
-      <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
-        {toasts.map((t) => (
-          <div
-            key={t.id}
-            className={`px-4 py-3 rounded-xl shadow-lg border animate-slide-up
-              pointer-events-auto flex items-center gap-2 text-sm font-medium
-              ${t.type === 'success' ? 'bg-green-50 text-green-800 border-green-200' : 
-                t.type === 'error' ? 'bg-red-50 text-red-800 border-red-200' : 
-                'bg-coffee-800 text-cream-50 border-coffee-700'}`}
-          >
-            {t.type === 'success' && <span>✅</span>}
-            {t.type === 'error' && <span>❌</span>}
-            {t.type === 'info' && <span>ℹ️</span>}
-            {t.message}
-          </div>
-        ))}
-      </div>
     </ToastContext.Provider>
   );
 }

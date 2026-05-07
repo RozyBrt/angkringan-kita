@@ -148,6 +148,7 @@ function CheckoutContent() {
   // Ambil data promo dari URL param (dikirim dari Cart page)
   const promoCodeParam = searchParams.get('promo');
   const discountAmountParam = Number(searchParams.get('discount') || 0);
+  const pointsUsedParam = Number(searchParams.get('points_used') || 0);
   const finalTotalParam = Number(searchParams.get('final') || total);
 
   // Gunakan finalTotalParam kalau ada promo valid, kalau tidak pakai total keranjang
@@ -233,8 +234,9 @@ function CheckoutContent() {
       const pointsEarned = res.pointsEarned || 0;
       try {
         const existingPoints = parseInt(localStorage.getItem('angkringan_loyalty_points') || '0', 10);
-        const newTotal = existingPoints + pointsEarned;
-        localStorage.setItem('angkringan_loyalty_points', String(newTotal));
+        // Tambah poin baru DAN potong poin yang dipake bray
+        const newTotal = existingPoints + pointsEarned - pointsUsedParam;
+        localStorage.setItem('angkringan_loyalty_points', String(Math.max(0, newTotal)));
       } catch { /* ignore */ }
 
       // Simpan riwayat pesanan
@@ -392,10 +394,19 @@ function CheckoutContent() {
                   </div>
                 </>
               )}
+              {pointsUsedParam > 0 && (
+                <div className="flex justify-between text-sm text-amber-600 font-medium">
+                  <span className="flex items-center gap-1">
+                    <Star size={12} fill="currentColor" />
+                    Tukar Poin
+                  </span>
+                  <span className="tabular-nums">- {formatPrice(pointsUsedParam)}</span>
+                </div>
+              )}
               <div className="flex justify-between pt-1">
                 <span className="font-bold text-coffee-900 text-sm">Total Bayar</span>
                 <div className="text-right">
-                  {effectiveDiscount > 0 && (
+                  {(effectiveDiscount > 0 || pointsUsedParam > 0) && (
                     <p className="text-xs text-coffee-400 line-through tabular-nums">{formatPrice(total)}</p>
                   )}
                   <span className="font-bold text-coffee-800 text-base tabular-nums">
