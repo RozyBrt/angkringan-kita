@@ -5,6 +5,8 @@ import { useRealtimeOrders } from '@/hooks/useRealtimeOrders';
 import { updateOrderStatus, completeAndPayOrder } from '@/lib/actions/orders';
 import OrderReceipt from '@/components/admin/OrderReceipt';
 import { OrderWithItems } from '@/lib/types/order';
+import { ShopStatus, getShopStatus, updateShopStatus } from '@/lib/actions/settings';
+import { useEffect } from 'react';
 import {
   Clock,
   ChefHat,
@@ -134,6 +136,18 @@ export default function AdminDashboard() {
           </div>
         </div>
 
+        {/* SHOP STATUS CONTROL - NEW FEATURE! */}
+        <div className="bg-coffee-900/40 border border-coffee-800/50 rounded-2xl p-3 backdrop-blur-sm flex flex-col gap-2 min-w-[200px]">
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[10px] font-black text-coffee-400 uppercase tracking-widest">Kontrol Toko</span>
+            <div className="flex items-center gap-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
+              <span className="text-[10px] font-bold text-orange-200">Live</span>
+            </div>
+          </div>
+          <ShopStatusControl />
+        </div>
+
         {/* STATS CARDS - Glassmorphism Style */}
         <div className="grid grid-cols-3 gap-3 w-full lg:w-auto">
           <StatCard
@@ -212,6 +226,57 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function ShopStatusControl() {
+  const [status, setStatus] = useState<ShopStatus>('auto');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function init() {
+      const current = await getShopStatus();
+      setStatus(current);
+      setLoading(false);
+    }
+    init();
+  }, []);
+
+  const handleStatusChange = async (newStatus: ShopStatus) => {
+    if (loading) return;
+    setStatus(newStatus);
+    await updateShopStatus(newStatus);
+  };
+
+  if (loading) return <div className="h-8 flex items-center justify-center"><div className="w-4 h-4 border-2 border-coffee-400 border-t-transparent rounded-full animate-spin" /></div>;
+
+  return (
+    <div className="flex gap-1 bg-coffee-950/50 p-1 rounded-xl border border-coffee-800/30">
+      <button
+        onClick={() => handleStatusChange('auto')}
+        className={`flex-1 py-1.5 px-2 rounded-lg text-[10px] font-black transition-all ${
+          status === 'auto' ? 'bg-coffee-600 text-cream-50 shadow-lg' : 'text-coffee-500 hover:text-coffee-300'
+        }`}
+      >
+        AUTO
+      </button>
+      <button
+        onClick={() => handleStatusChange('open')}
+        className={`flex-1 py-1.5 px-2 rounded-lg text-[10px] font-black transition-all ${
+          status === 'open' ? 'bg-green-600 text-white shadow-lg' : 'text-coffee-500 hover:text-green-400'
+        }`}
+      >
+        OPEN
+      </button>
+      <button
+        onClick={() => handleStatusChange('closed')}
+        className={`flex-1 py-1.5 px-2 rounded-lg text-[10px] font-black transition-all ${
+          status === 'closed' ? 'bg-red-600 text-white shadow-lg' : 'text-coffee-500 hover:text-red-400'
+        }`}
+      >
+        CLOSE
+      </button>
     </div>
   );
 }

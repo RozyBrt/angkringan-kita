@@ -13,12 +13,15 @@ const CATEGORIES: { label: string; value: Category | 'Semua'; icon: React.ReactN
   { label: 'Makanan', value: 'Makanan', icon: <UtensilsCrossed size={15} /> },
 ];
 
+import { getShopStatus } from '@/lib/actions/settings';
+
 export default function MenuPage() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<Category | 'Semua'>('Semua');
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState(true);
 
   useEffect(() => {
     async function fetchMenu() {
@@ -40,7 +43,24 @@ export default function MenuPage() {
       }
     }
 
+    // Cek jam buka bray (Hybrid Logic)
+    async function checkOpenStatus() {
+      const dbStatus = await getShopStatus();
+      
+      if (dbStatus === 'open') {
+        setIsOpen(true);
+      } else if (dbStatus === 'closed') {
+        setIsOpen(false);
+      } else {
+        // Mode AUTO: Ikutin jadwal
+        const now = new Date();
+        const hours = now.getHours();
+        setIsOpen(hours >= 17 && hours <= 23);
+      }
+    }
+
     fetchMenu();
+    checkOpenStatus();
 
     // REAL-TIME: Dengerin perubahan di tabel menu_items
     const channel = supabase
@@ -62,26 +82,13 @@ export default function MenuPage() {
       )
       .subscribe();
 
+    // Re-check status tiap 1 menit bray
+    const interval = setInterval(checkOpenStatus, 60000);
+
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(interval);
     };
-  }, []);
-
-  const [isOpen, setIsOpen] = useState(true);
-
-  useEffect(() => {
-    // Cek jam buka bray
-    function checkOpenStatus() {
-      const now = new Date();
-      const hours = now.getHours();
-      // Anggap buka jam 17:00 sampe 24:00 bray
-      setIsOpen(hours >= 17 && hours <= 23);
-    }
-
-    checkOpenStatus();
-    // Re-check tiap 1 menit bray
-    const interval = setInterval(checkOpenStatus, 60000);
-    return () => clearInterval(interval);
   }, []);
 
   const filtered = menuItems.filter((item) => {
