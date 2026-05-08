@@ -170,7 +170,7 @@ export default function CartPage() {
                 value={promoCode}
                 onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
                 onKeyDown={(e) => e.key === 'Enter' && handleApplyPromo()}
-                placeholder="Contoh: ANGKRING10"
+                placeholder="Contoh: ANGKRING10PERSEN"
                 className="input-field flex-1 text-sm uppercase tracking-widest"
               />
               <button
