@@ -28,7 +28,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<Cart>({ items: [] });
 
   useEffect(() => {
+    // Initial load
     setCart(getCart());
+
+    // Listen for changes from other tabs
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'angkringan_cart') {
+        setCart(getCart());
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const addItem = useCallback((item: MenuItem) => {
