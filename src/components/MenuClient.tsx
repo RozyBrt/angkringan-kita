@@ -27,9 +27,11 @@ export default function MenuClient({ initialMenuItems, initialShopStatus }: Menu
     // Hitung status buka saat init berdasarkan data dari server
     if (initialShopStatus === 'open') return true;
     if (initialShopStatus === 'closed') return false;
-    // Mode AUTO: Ikutin jadwal jam (17:00 - 23:00)
-    const hours = new Date().getHours();
-    return hours >= 17 && hours <= 23;
+    // Mode AUTO: Ikutin jadwal jam (08:00 - 23:50)
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    return hours >= 8 && (hours < 23 || (hours === 23 && minutes <= 50));
   });
 
   useEffect(() => {
@@ -69,7 +71,9 @@ export default function MenuClient({ initialMenuItems, initialShopStatus }: Menu
               setIsOpen(false);
             } else {
               const now = new Date();
-              setIsOpen(now.getHours() >= 17 && now.getHours() <= 23);
+              const hours = now.getHours();
+              const minutes = now.getMinutes();
+              setIsOpen(hours >= 8 && (hours < 23 || (hours === 23 && minutes <= 50)));
             }
           }
         }
@@ -162,7 +166,10 @@ export default function MenuClient({ initialMenuItems, initialShopStatus }: Menu
           <span className="text-2xl">🌙</span>
           <div>
             <p className="text-red-200 font-bold text-sm">Maaf, Kami Sedang Tutup</p>
-            <p className="text-red-300/70 text-xs">Menu tetap bisa dilihat, tapi pemesanan sedang dinonaktifkan sementara.</p>
+            <p className="text-red-300/70 text-xs">
+              Menu tetap bisa dilihat, tapi pemesanan sedang dinonaktifkan sementara.<br/>
+              <strong className="text-red-200">Jadwal Operasional:</strong> Buka pukul 08:00 Pagi sampai 23:50 Malam.
+            </p>
           </div>
         </div>
       )}

@@ -186,8 +186,10 @@ function CheckoutContent() {
       } else if (status === 'closed') {
         setIsShopOpen(false);
       } else {
-        const hours = new Date().getHours();
-        setIsShopOpen(hours >= 17 && hours <= 23);
+        const now = new Date();
+        const hours = now.getHours();
+        const minutes = now.getMinutes();
+        setIsShopOpen(hours >= 8 && (hours < 23 || (hours === 23 && minutes <= 50)));
       }
 
       const res = await getOccupiedTables();
@@ -228,8 +230,10 @@ function CheckoutContent() {
             } else if (newStatus === 'closed') {
               setIsShopOpen(false);
             } else {
-              const hours = new Date().getHours();
-              setIsShopOpen(hours >= 17 && hours <= 23);
+              const now = new Date();
+              const hours = now.getHours();
+              const minutes = now.getMinutes();
+              setIsShopOpen(hours >= 8 && (hours < 23 || (hours === 23 && minutes <= 50)));
             }
           }
         }
@@ -544,6 +548,18 @@ function CheckoutContent() {
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
               {error}
+            </div>
+          )}
+
+          {!isShopOpen && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-sm flex items-start gap-3">
+              <span className="text-xl">🌙</span>
+              <div>
+                <p className="font-bold text-red-800">Pemesanan Dinonaktifkan</p>
+                <p className="text-red-700/80 text-xs mt-0.5">
+                  Toko sedang tutup. Silakan kembali pada jam operasional kami: <strong className="text-red-800">08:00 Pagi sampai 23:50 Malam</strong>.
+                </p>
+              </div>
             </div>
           )}
 
