@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
-import { supabase } from '@/lib/supabase';
 import { Lock, LogIn, Coffee } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { createBrowserClient } from '@supabase/ssr';
 
 interface AdminLoginProps {
   onLoginSuccess?: () => void;
@@ -11,6 +11,10 @@ interface AdminLoginProps {
 
 export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
   const router = useRouter();
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -34,6 +38,9 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
       if (onLoginSuccess) {
         onLoginSuccess();
       } else {
+        // Reset loading SEBELUM refresh, biar spinner tidak stuck
+        // Server Component akan re-render dan menggantikan halaman ini
+        setLoading(false);
         router.refresh();
       }
     }
