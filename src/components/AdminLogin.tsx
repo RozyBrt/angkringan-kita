@@ -3,12 +3,14 @@
 import { useState, FormEvent } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Lock, LogIn, Coffee } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface AdminLoginProps {
-  onLoginSuccess: () => void;
+  onLoginSuccess?: () => void;
 }
 
 export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -27,7 +29,13 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
       setError('Email atau password salah. Coba lagi ya!');
       setLoading(false);
     } else {
-      onLoginSuccess();
+      // Kalau ada callback (legacy client component), jalankan itu
+      // Kalau tidak, refresh halaman biar server component re-render dengan session baru
+      if (onLoginSuccess) {
+        onLoginSuccess();
+      } else {
+        router.refresh();
+      }
     }
   }
 
