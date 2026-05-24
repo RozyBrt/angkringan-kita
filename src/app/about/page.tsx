@@ -1,5 +1,3 @@
-'use client';
-
 import { MapPin, Clock, Phone, Coffee, Heart } from 'lucide-react';
 
 export default function AboutPage() {
