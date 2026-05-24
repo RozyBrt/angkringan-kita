@@ -1,17 +1,12 @@
-# Panduan Refactor Next.js: Dari SPA (CSR) ke Server Components (SSR)
+# Dokumentasi Arsitektur Next.js SSR: Dari SPA (CSR) ke Server Components (SSR) ✅
 
-Dokumen ini adalah catatan untuk referensi di masa mendatang jika tim memutuskan untuk mengoptimalkan performa aplikasi **Angkringan Kita**.
+Dokumen ini mencatat hasil implementasi optimasi performa aplikasi **Angkringan Kita** dengan memindahkan rendering ke Server-Side Rendering (SSR) dan Server Components (RSC) yang diselesaikan pada 24 Mei 2026.
 
-## Latar Belakang Masalah
-Saat ini, proyek dibangun menggunakan kerangka kerja Next.js 14, namun hampir seluruh file (terutama file halaman utama di `src/app/**/page.tsx`) menggunakan direktif `'use client'`. 
-Selain itu, pengambilan data ke Supabase dilakukan menggunakan `useEffect` dari sisi *browser*.
+## Latar Belakang & Perubahan Arsitektur
+Sebelumnya, proyek ini berjalan layaknya Single Page Application (SPA) tradisional di mana hampir seluruh halaman menggunakan direktif `'use client'` dan memuat data menggunakan `useEffect` di browser. Hal ini meningkatkan ukuran bundel Javascript klien dan memperlambat loading awal di perangkat berspesifikasi rendah.
 
-**Dampak:**
-Aplikasi bertindak persis seperti Single Page Application (SPA) biasa (misal: Vite/React jadul). Dampak negatifnya adalah membengkaknya **Javascript Bundle Size**. HP pelanggan (terutama berspesifikasi rendah) harus mengunduh dan mengeksekusi semua logika Javascript ini hanya untuk menampilkan menu, yang bisa menyebabkan web terasa lambat atau *lag* saat pertama kali dibuka.
+Sekarang, proyek telah sepenuhnya dioptimalkan menggunakan **React Server Components (RSC)** dan Server-Side Rendering (SSR). Server kini mengambil data awal dari Supabase secara langsung sebelum halaman dikirim, mengurangi beban eksekusi JS di sisi pelanggan secara drastis.
 
-## Tujuan Refactor
-Memanfaatkan fitur utama Next.js yaitu **React Server Components (RSC)**.
-Server akan mengambil data ke Supabase secara kilat dan merakit HTML di sisi server, sehingga HP pelanggan hanya menerima hasil jadinya saja (jauh lebih cepat dan ringan).
 
 ---
 
@@ -95,4 +90,4 @@ export default function MenuInteractive({ initialData }) {
 }
 ```
 
-*Dokumen ini dibuat agar tim *engineering* memiliki arah yang jelas jika sewaktu-waktu isu performa *loading* awal mulai dikeluhkan oleh pelanggan.*
+*Dokumen ini diperbarui untuk mencatat keberhasilan migrasi performa ke Server-Side Rendering (SSR) demi pengalaman pelanggan Angkringan Kita yang jauh lebih cepat, hemat baterai, dan responsif.*
