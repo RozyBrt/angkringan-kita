@@ -102,8 +102,8 @@ export default function AdminDashboard() {
             </div>
             <span className="text-coffee-400 font-bold text-sm uppercase tracking-widest">Manajemen Operasional</span>
           </div>
-          <div className="flex items-center gap-4">
-            <h1 className="font-display text-4xl font-bold text-cream-50">Dashboard Dapur 🚀</h1>
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+            <h1 className="font-display text-3xl sm:text-4xl font-bold text-cream-50 w-full sm:w-auto">Dashboard Dapur 🚀</h1>
             <Link
               href="/admin/analytics"
               className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500/20 to-orange-600/20 hover:from-orange-500/30 hover:to-orange-600/30 border border-orange-500/30 text-orange-300 rounded-xl font-bold transition-all active:scale-95 shadow-[0_0_15px_rgba(237,137,54,0.15)] ml-2"

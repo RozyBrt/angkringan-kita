@@ -207,7 +207,7 @@ export default function AdminMenuClient({ initialMenuItems }: AdminMenuClientPro
   return (
     <div className="py-8 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="font-display text-2xl font-bold text-cream-100">Kelola Menu</h1>
           <p className="text-coffee-400 text-sm mt-0.5">
@@ -216,8 +216,8 @@ export default function AdminMenuClient({ initialMenuItems }: AdminMenuClientPro
         </div>
         <button
           onClick={openAddForm}
-          className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-green-600 text-white 
-                     font-semibold text-sm hover:bg-green-500 transition-all active:scale-95"
+          className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-green-600 text-white 
+                     font-semibold text-sm hover:bg-green-500 transition-all active:scale-95 w-full sm:w-auto"
         >
           <Plus size={16} />
           Tambah Menu

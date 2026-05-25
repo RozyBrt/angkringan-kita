@@ -120,16 +120,16 @@ export default function AdminPage() {
   return (
     <div className="py-8 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="font-display text-2xl font-bold text-cream-100">Pesanan Masuk</h1>
           <p className="text-coffee-400 text-sm mt-0.5">
             Total {orders.length} pesanan hari ini
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           {newOrderIds.size > 0 && (
-            <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-warm-600 text-white text-sm font-semibold animate-pulse-soft">
+            <div className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-warm-600 text-white text-sm font-semibold animate-pulse-soft">
               <Bell size={15} />
               <span>{newOrderIds.size} Baru!</span>
             </div>
@@ -138,7 +138,7 @@ export default function AdminPage() {
             id="refresh-orders"
             onClick={handleRefresh}
             disabled={refreshing}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-coffee-800 text-coffee-300 
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-coffee-800 text-coffee-300 
                        hover:text-cream-100 hover:bg-coffee-700 transition-all text-sm"
             aria-label="Refresh pesanan"
           >
@@ -148,7 +148,7 @@ export default function AdminPage() {
           <button
             id="admin-logout"
             onClick={handleLogout}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-coffee-800 text-coffee-400 
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-coffee-800 text-coffee-400 
                        hover:text-red-400 hover:bg-red-900/30 transition-all text-sm"
           >
             <LogOut size={15} />
@@ -183,34 +183,36 @@ export default function AdminPage() {
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-2 mb-5">
-        {(
-          [
-            { value: 'pending', label: 'Menunggu', count: pendingCount },
-            { value: 'served', label: 'Selesai', count: servedCount },
-            { value: 'all', label: 'Semua', count: orders.length },
-          ] as { value: FilterStatus; label: string; count: number }[]
-        ).map((tab) => (
-          <button
-            key={tab.value}
-            id={`filter-${tab.value}`}
-            onClick={() => setFilter(tab.value)}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-              filter === tab.value
-                ? 'bg-coffee-500 text-white'
-                : 'bg-coffee-800 text-coffee-400 hover:bg-coffee-700 hover:text-coffee-200'
-            }`}
-          >
-            {tab.label}
-            <span
-              className={`text-xs px-1.5 py-0.5 rounded-full tabular-nums ${
-                filter === tab.value ? 'bg-white/20' : 'bg-coffee-700'
+      <div className="flex gap-2 mb-5 overflow-x-auto pb-2 no-scrollbar w-full">
+        <div className="flex items-center gap-2 min-w-max">
+          {(
+            [
+              { value: 'pending', label: 'Menunggu', count: pendingCount },
+              { value: 'served', label: 'Selesai', count: servedCount },
+              { value: 'all', label: 'Semua', count: orders.length },
+            ] as { value: FilterStatus; label: string; count: number }[]
+          ).map((tab) => (
+            <button
+              key={tab.value}
+              id={`filter-${tab.value}`}
+              onClick={() => setFilter(tab.value)}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                filter === tab.value
+                  ? 'bg-coffee-500 text-white'
+                  : 'bg-coffee-800 text-coffee-400 hover:bg-coffee-700 hover:text-coffee-200'
               }`}
             >
-              {tab.count}
-            </span>
-          </button>
-        ))}
+              {tab.label}
+              <span
+                className={`text-xs px-1.5 py-0.5 rounded-full tabular-nums ${
+                  filter === tab.value ? 'bg-white/20' : 'bg-coffee-700'
+                }`}
+              >
+                {tab.count}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Orders */}
