@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { CartProvider } from "@/hooks/useCart";
 import { ToastProvider } from "@/hooks/useToast";
@@ -15,6 +15,14 @@ export const metadata: Metadata = {
     description: "Pesan makanan dan minuman favoritmu langsung dari Angkringan Kita.",
     type: "website",
   },
+  manifest: "/manifest.json",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#2c1a14",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({
@@ -30,9 +38,9 @@ export default function RootLayout({
             <Navbar />
             <main className="min-h-screen pt-16">{children}</main>
             <footer className="bg-coffee-900 text-cream-200 text-center py-6 mt-16 text-sm">
-              <Link href="/admin" className="block font-display text-lg text-cream-100 mb-1 hover:text-white transition-colors">
+              <span className="block font-display text-lg text-cream-100 mb-1">
                 Angkringan Kita ☕
-              </Link>
+              </span>
               <p className="text-coffee-300">Dibuat dengan ❤️ — Nikmati setiap tegukan</p>
             </footer>
           </CartProvider>
