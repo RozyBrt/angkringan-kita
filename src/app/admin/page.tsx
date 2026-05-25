@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { createBrowserClient } from '@supabase/ssr';
 import { supabase } from '@/lib/supabase';
 import { OrderWithItems, OrderStatus } from '@/lib/types/order';
-import AdminLogin from '@/components/AdminLogin';
 import OrderCard from '@/components/OrderCard';
 import {
   LogOut,
@@ -18,27 +18,11 @@ import { updateOrderStatus } from '@/lib/actions/orders';
 type FilterStatus = 'all' | 'pending' | 'served';
 
 export default function AdminPage() {
-  const [session, setSession] = useState<unknown>(null);
-  const [sessionLoading, setSessionLoading] = useState(true);
   const [orders, setOrders] = useState<OrderWithItems[]>([]);
-  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersLoading, setOrdersLoading] = useState(true);
   const [filter, setFilter] = useState<FilterStatus>('pending');
   const [refreshing, setRefreshing] = useState(false);
   const [newOrderIds, setNewOrderIds] = useState<Set<string>>(new Set());
-
-  // Check auth session
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setSessionLoading(false);
-    });
-
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => listener.subscription.unsubscribe();
-  }, []);
 
   const fetchOrders = useCallback(async () => {
     setOrdersLoading(true);
@@ -53,14 +37,13 @@ export default function AdminPage() {
     setOrdersLoading(false);
   }, []);
 
-  // Fetch orders when logged in
+  // Fetch orders on mount
   useEffect(() => {
-    if (session) fetchOrders();
-  }, [session, fetchOrders]);
+    fetchOrders();
+  }, [fetchOrders]);
 
   // Supabase Realtime: listen for new orders
   useEffect(() => {
-    if (!session) return;
 
     const channel = supabase
       .channel('orders-realtime')
@@ -95,7 +78,7 @@ export default function AdminPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [session, fetchOrders]);
+  }, [fetchOrders]);
 
   async function handleRefresh() {
     setRefreshing(true);
@@ -104,9 +87,12 @@ export default function AdminPage() {
   }
 
   async function handleLogout() {
-    await supabase.auth.signOut();
-    setSession(null);
-    setOrders([]);
+    const supabaseSsr = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    await supabaseSsr.auth.signOut();
+    window.location.href = '/admin/login';
   }
 
   async function handleStatusChange(orderId: string | number, status: OrderStatus) {
@@ -121,19 +107,7 @@ export default function AdminPage() {
     }
   }
 
-  // Auth loading state
-  if (sessionLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <span className="w-8 h-8 border-2 border-coffee-600 border-t-coffee-300 rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  // Not logged in
-  if (!session) {
-    return <AdminLogin onLoginSuccess={() => fetchOrders()} />;
-  }
+  // Auth loading state and AdminLogin fallback removed because of middleware.
 
   // Filter orders
   const filteredOrders = (filter === 'all'

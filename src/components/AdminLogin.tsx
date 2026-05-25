@@ -5,11 +5,7 @@ import { Lock, LogIn, Coffee } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 
-interface AdminLoginProps {
-  onLoginSuccess?: () => void;
-}
-
-export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
+export default function AdminLogin() {
   const router = useRouter();
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -33,16 +29,9 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
       setError('Email atau password salah. Coba lagi ya!');
       setLoading(false);
     } else {
-      // Kalau ada callback (legacy client component), jalankan itu
-      // Kalau tidak, refresh halaman biar server component re-render dengan session baru
-      if (onLoginSuccess) {
-        onLoginSuccess();
-      } else {
-        // Reset loading SEBELUM refresh, biar spinner tidak stuck
-        // Server Component akan re-render dan menggantikan halaman ini
-        setLoading(false);
-        router.refresh();
-      }
+      // Redirect ke dashboard admin dan paksa refresh cache navigasi
+      router.push('/admin');
+      router.refresh();
     }
   }
 
