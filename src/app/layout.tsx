@@ -15,7 +15,6 @@ export const metadata: Metadata = {
     description: "Pesan makanan dan minuman favoritmu langsung dari Angkringan Kita.",
     type: "website",
   },
-  manifest: "/manifest.json",
 };
 
 export const viewport: Viewport = {
