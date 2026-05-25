@@ -3,7 +3,7 @@ import "./globals.css";
 import { CartProvider } from "@/hooks/useCart";
 import { ToastProvider } from "@/hooks/useToast";
 import Navbar from "@/components/Navbar";
-import Link from "next/link";
+
 
 export const metadata: Metadata = {
   title: "Angkringan Kita — Pesan Online",
