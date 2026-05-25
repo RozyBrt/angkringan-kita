@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: 'Admin — Angkringan Kita',
   description: 'Dashboard admin untuk mengelola pesanan masuk.',
   robots: 'noindex, nofollow',
+  manifest: '/manifest-admin.json',
 };
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
