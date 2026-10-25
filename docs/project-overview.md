@@ -66,13 +66,15 @@ Proyek menggunakan database PostgreSQL yang dikelola melalui Supabase dengan tab
 ## 4. Konfigurasi Deployment & Environment Variables
 
 ### Platform Hosting
-* **Production Deployment**: **Vercel** (`https://angkringan-kita.vercel.app`).
+* Production Deployment: Vercel (https://angkringan-kita.vercel.app).
 * Kompatibel penuh dengan Serverless Function dan Edge runtime bawaan Next.js.
+* **Vercel Cron (Database Keep-Alive)**: Dikonfigurasi di `vercel.json` untuk menjalankan ping ke `/api/keep-alive` setiap 3 hari sekali (`0 0 */3 * *`) guna mencegah *auto-pause* Supabase Free Tier.
 
 ### Konfigurasi Environment (`.env.local` / `.env.example`)
 * `NEXT_PUBLIC_SUPABASE_URL`: URL REST API endpoint proyek Supabase.
 * `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Kunci publik anonim Supabase (aman untuk browser).
 * `SUPABASE_SERVICE_ROLE_KEY`: Kunci rahasia service role untuk eksekusi server-side dengan akses penuh.
+* `CRON_SECRET` *(Opsional)*: Token pengaman otentikasi Vercel Cron untuk endpoint `/api/keep-alive`.
 
 ### Konfigurasi Remote Images (`next.config.mjs`)
 Daftar host gambar eksternal yang diizinkan untuk optimasi `next/image`:
@@ -92,6 +94,7 @@ angkringan-kita/
 ├── package.json              # Definisi dependensi & skrip npm
 ├── tailwind.config.ts        # Konfigurasi tema warna & animasi Tailwind
 ├── tsconfig.json             # Konfigurasi compiler TypeScript & path aliases (@/*)
+├── vercel.json               # Konfigurasi Vercel Cron Job (Keep-Alive Database)
 ├── docs/                     # Dokumentasi arsitektur & fitur
 │   ├── loyalty-system.md     # Spesifikasi sistem poin loyalitas
 │   ├── promo-inventory.md    # Spesifikasi promo & pelacakan stok
@@ -114,6 +117,9 @@ angkringan-kita/
     │   ├── error.tsx         # Boundary penanganan error
     │   ├── template.tsx      # Animasi transisi halaman
     │   ├── about/            # Halaman Profil, Cerita & Kontak
+    │   ├── api/
+    │   │   └── keep-alive/   # Endpoint Cron Ping Supabase (Pencegah Auto-Pause)
+    │   │       └── route.ts
     │   ├── cart/             # Halaman Keranjang, Input Kupon & Poin
     │   ├── checkout/         # Halaman Checkout & Table Picker (1-30)
     │   ├── order-success/    # Halaman Konfirmasi Pesanan Sukses
