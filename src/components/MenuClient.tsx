@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { MenuItem, Category } from '@/types';
 import { supabase } from '@/lib/supabase';
 import MenuCard from '@/components/MenuCard';
@@ -23,6 +23,7 @@ export default function MenuClient({ initialMenuItems, initialShopStatus }: Menu
   const [menuItems, setMenuItems] = useState<MenuItem[]>(initialMenuItems);
   const [selectedCategory, setSelectedCategory] = useState<Category | 'Semua'>('Semua');
   const [searchQuery, setSearchQuery] = useState('');
+  const menuSectionRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState<boolean>(() => {
     // Hitung status buka saat init berdasarkan data dari server
     if (initialShopStatus === 'open') return true;
@@ -94,6 +95,17 @@ export default function MenuClient({ initialMenuItems, initialShopStatus }: Menu
     };
   }, []);
 
+  const handleCategorySelect = (category: Category | 'Semua') => {
+    setSelectedCategory(category);
+    if (menuSectionRef.current) {
+      const elementPosition = menuSectionRef.current.getBoundingClientRect().top + window.scrollY;
+      const targetScroll = elementPosition - 135;
+      if (window.scrollY > targetScroll) {
+        window.scrollTo({ top: targetScroll, behavior: 'smooth' });
+      }
+    }
+  };
+
   const filtered = menuItems.filter((item) => {
     const matchCategory = selectedCategory === 'Semua' || item.category === selectedCategory;
     const matchSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -138,27 +150,32 @@ export default function MenuClient({ initialMenuItems, initialShopStatus }: Menu
         />
       </div>
 
-      {/* Category filter */}
-      <div className="flex gap-2 overflow-x-auto pb-2 mb-7 no-scrollbar">
-        {CATEGORIES.filter((cat) => {
-          if (cat.value === 'Semua') return true;
-          return menuItems.some((item) => item.category === cat.value);
-        }).map((cat) => (
-          <button
-            key={cat.value}
-            id={`category-${cat.value}`}
-            onClick={() => setSelectedCategory(cat.value)}
-            className={`category-chip flex items-center gap-1.5 ${
-              selectedCategory === cat.value
-                ? 'category-chip-active'
-                : 'category-chip-inactive'
-            }`}
-          >
-            {cat.icon}
-            {cat.label}
-          </button>
-        ))}
+      {/* Category filter (Sticky di bawah Navbar) */}
+      <div className="sticky top-16 z-40 -mx-4 px-4 py-3 mb-6 bg-[#fdf8f0]/95 backdrop-blur-md border-b border-cream-200/60 shadow-sm transition-all">
+        <div className="flex gap-2 overflow-x-auto no-scrollbar max-w-4xl mx-auto py-0.5">
+          {CATEGORIES.filter((cat) => {
+            if (cat.value === 'Semua') return true;
+            return menuItems.some((item) => item.category === cat.value);
+          }).map((cat) => (
+            <button
+              key={cat.value}
+              id={`category-${cat.value}`}
+              onClick={() => handleCategorySelect(cat.value)}
+              className={`category-chip flex items-center gap-1.5 ${
+                selectedCategory === cat.value
+                  ? 'category-chip-active'
+                  : 'category-chip-inactive'
+              }`}
+            >
+              {cat.icon}
+              {cat.label}
+            </button>
+          ))}
+        </div>
       </div>
+
+      {/* Target anchor untuk scroll posisi menu */}
+      <div ref={menuSectionRef} />
 
       {/* "Tutup" Banner */}
       {!isOpen && (
