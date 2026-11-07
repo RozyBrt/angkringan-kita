@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { ShoppingCart, Coffee, Info, ClipboardList } from 'lucide-react';
+import { ShoppingCart, Info, ClipboardList } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { useState, useEffect } from 'react';
 
@@ -40,12 +41,19 @@ export default function Navbar() {
         {/* Logo */}
         <Link
           href="/"
-          className="flex items-center gap-2 group"
+          className="flex items-center gap-2.5 group"
           aria-label="Angkringan Kita - Halaman Utama"
         >
-          <span className="p-1.5 bg-coffee-700 rounded-xl text-cream-50 group-hover:bg-coffee-800 transition-colors">
-            <Coffee size={18} strokeWidth={2.5} />
-          </span>
+          <div className="relative w-10 h-10 rounded-full overflow-hidden shadow-sm group-hover:scale-105 transition-transform shrink-0">
+            <Image
+              src="/images/logo.png"
+              alt="Logo Angkringan Kita"
+              fill
+              sizes="40px"
+              className="object-cover"
+              priority
+            />
+          </div>
           <span className="font-display font-semibold text-coffee-900 text-lg leading-none">
             Angkringan<br />
             <span className="text-coffee-500 text-sm font-normal">Kita ☕</span>

@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export const metadata: Metadata = {
   title: 'Admin — Angkringan Kita',
@@ -13,8 +14,16 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-coffee-950">
       <div className="bg-coffee-900 border-b border-coffee-800">
         <div className="max-w-5xl mx-auto px-4 py-3 sm:py-0 sm:h-14 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-          <div className="flex items-center gap-3 shrink-0">
-            <span className="text-xl">⚙️</span>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <div className="relative w-7 h-7 rounded-full overflow-hidden shadow-sm shrink-0">
+              <Image
+                src="/images/logo.png"
+                alt="Logo Angkringan Kita"
+                fill
+                sizes="28px"
+                className="object-cover"
+              />
+            </div>
             <span className="font-display text-cream-100 font-semibold text-lg">
               Admin Panel
             </span>

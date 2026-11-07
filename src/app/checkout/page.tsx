@@ -82,9 +82,9 @@ function QRISModal({
                     )
                   )
                 )}
-                {/* Center logo placeholder */}
+                {/* Center logo */}
                 <rect x="85" y="85" width="30" height="30" fill="white" rx="4"/>
-                <text x="100" y="105" textAnchor="middle" fontSize="16" fill="#c2724f">☕</text>
+                <image href="/images/logo.png" x="86" y="86" width="28" height="28" preserveAspectRatio="xMidYMid slice" />
               </svg>
             </div>
             <div className="text-center">

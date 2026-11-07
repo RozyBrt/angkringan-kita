@@ -1,12 +1,20 @@
-import { MapPin, Clock, Phone, Coffee, Heart } from 'lucide-react';
+import Image from 'next/image';
+import { MapPin, Clock, Phone, Heart } from 'lucide-react';
 
 export default function AboutPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-10 animate-fade-in">
       {/* Hero */}
       <div className="text-center mb-12">
-        <div className="inline-flex items-center justify-center w-20 h-20 bg-coffee-700 rounded-2xl text-cream-50 mb-5 shadow-lg">
-          <Coffee size={36} />
+        <div className="relative inline-flex items-center justify-center w-28 h-28 rounded-full overflow-hidden mb-5 shadow-xl ring-4 ring-coffee-700/20">
+          <Image
+            src="/images/logo.png"
+            alt="Logo Angkringan Kita"
+            fill
+            sizes="112px"
+            className="object-cover"
+            priority
+          />
         </div>
         <h1 className="font-display text-4xl sm:text-5xl font-bold text-coffee-900 mb-3">
           Tentang Kami
